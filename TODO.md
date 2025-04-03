@@ -6,7 +6,7 @@
   - Dependencies: None
   - Priority: High
 
-- [ ] Add required dependencies
+- [x] Add required dependencies
   - Description: Add google/generative-ai-go/genai and google.golang.org/api/option
   - Dependencies: Go module initialization
   - Priority: High
