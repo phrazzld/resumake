@@ -24,7 +24,7 @@
   - Dependencies: TUI model design
   - Priority: High
 
-- [ ] Implement initial welcome view
+- [x] Implement initial welcome view
   - Description: Create welcome screen with API key check and instructions
   - Dependencies: TUI model implementation
   - Priority: Medium

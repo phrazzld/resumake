@@ -274,16 +274,7 @@ func (m Model) View() string {
 	// Render different views based on the current state
 	switch m.state {
 	case stateWelcome:
-		content = "Welcome to Resumake!\n\n"
-		
-		if m.apiKeyOk {
-			content += "✅ API key is valid.\n\n"
-			content += "Press Enter to continue..."
-		} else {
-			content += "❌ API key is missing or invalid.\n\n"
-			content += "Please set the GEMINI_API_KEY environment variable and restart.\n"
-			content += "Press Enter to continue anyway..."
-		}
+		content = renderWelcomeView(m)
 	
 	case stateInputSourcePath:
 		content = "Enter the path to an existing resume (optional):\n\n"
