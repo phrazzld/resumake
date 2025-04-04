@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"fmt"
+	
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -34,6 +36,13 @@ var (
 		
 	flagValueStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#FFFFAA"))
+		
+	tipStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#88FF88")).
+		Italic(true)
+		
+	exampleStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#BBBBFF"))
 )
 
 // renderWelcomeView generates the welcome screen content
@@ -129,6 +138,63 @@ func renderSourceFileInputView(m Model) string {
 	
 	// Keyboard shortcuts
 	content += keyboardHintStyle.Render("• Enter: Continue to next step")
+	content += "\n"
+	content += keyboardHintStyle.Render("• Ctrl+C to quit")
+	
+	return content
+}
+
+// renderStdinInputView generates the stdin textarea input view content
+func renderStdinInputView(m Model) string {
+	var content string
+	
+	// Title
+	content += titleStyle.Render("Resume Details")
+	content += "\n\n"
+	
+	// Instructions
+	content += subtitleStyle.Render("Tell us about your experience, skills, and qualifications.")
+	content += "\n\n"
+	
+	// Show source file info if one was provided
+	if m.sourceContent != "" {
+		content += "Source file: " + successStyle.Render(m.sourcePathInput.Value())
+		content += "\n"
+		content += fmt.Sprintf("Content length: %d characters", len(m.sourceContent))
+		content += "\n\n"
+		content += "We'll combine this source content with the details you provide below."
+		content += "\n\n"
+	}
+	
+	// Input field label
+	content += inputLabelStyle.Render("Enter your resume details:")
+	content += "\n\n"
+	
+	// Tips and examples
+	content += tipStyle.Render("Tips:")
+	content += "\n"
+	content += tipStyle.Render("• Be specific about your achievements")
+	content += "\n"
+	content += tipStyle.Render("• Include relevant skills and technologies")
+	content += "\n"
+	content += tipStyle.Render("• Mention education, certifications, and years of experience")
+	content += "\n\n"
+	
+	content += exampleStyle.Render("Example:")
+	content += "\n"
+	content += exampleStyle.Render("I have 5 years of experience as a software developer.")
+	content += "\n"
+	content += exampleStyle.Render("Skills: Go, Python, JavaScript, Docker, Kubernetes")
+	content += "\n"
+	content += exampleStyle.Render("Education: BS in Computer Science, University of Example")
+	content += "\n\n"
+	
+	// The actual textarea component
+	content += m.stdinInput.View()
+	content += "\n\n"
+	
+	// Keyboard shortcuts
+	content += keyboardHintStyle.Render("• Ctrl+D when finished")
 	content += "\n"
 	content += keyboardHintStyle.Render("• Ctrl+C to quit")
 	

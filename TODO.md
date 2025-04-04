@@ -40,7 +40,7 @@
   - Dependencies: TUI model and welcome view
   - Priority: Medium
 
-- [ ] Implement stdin text area input
+- [x] Implement stdin text area input
   - Description: Create view for multi-line text input using textarea bubble
   - Dependencies: TUI model implementation
   - Priority: Medium

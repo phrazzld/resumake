@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 	
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 )
 
@@ -121,5 +122,71 @@ func TestRenderSourceFileInputView(t *testing.T) {
 	// 6. Should not mention flags if no flag source path was provided
 	if strings.Contains(emptyFlagView, "from command line flags") {
 		t.Error("Source file input view should not mention flags if no flag source path is provided")
+	}
+}
+
+func TestRenderStdinInputView(t *testing.T) {
+	// Initialize textarea
+	stdinTA := textarea.New()
+	stdinTA.Placeholder = "Enter details about your experience, skills, etc."
+	stdinTA.SetValue("My resume content")
+	
+	// Create model with the stdin input
+	model := Model{
+		stdinInput:     stdinTA,
+		sourceContent:  "Sample source content",
+		sourcePathInput: textinput.New(),
+	}
+	model.sourcePathInput.SetValue("/path/to/sample.md")
+	
+	// Get the rendered view
+	stdinView := renderStdinInputView(model)
+	
+	// The stdin input view should:
+	// 1. Contain a title or heading about resume details
+	if !strings.Contains(stdinView, "Resume Details") {
+		t.Error("Stdin input view should contain a title about resume details")
+	}
+	
+	// 2. Display the textarea component
+	if !strings.Contains(stdinView, stdinTA.View()) {
+		t.Error("Stdin input view should display the textarea component")
+	}
+	
+	// 3. Include instructions for providing resume details
+	if !strings.Contains(stdinView, "experience") || !strings.Contains(stdinView, "skills") {
+		t.Error("Stdin input view should include instructions about what content to provide")
+	}
+	
+	// 4. Show source file information if a source file was provided
+	if !strings.Contains(stdinView, "Source file") {
+		t.Error("Stdin input view should show source file info when one is provided")
+	}
+	
+	// 5. Include keyboard shortcut hints
+	if !strings.Contains(stdinView, "Ctrl+D") {
+		t.Error("Stdin input view should include Ctrl+D shortcut to finish input")
+	}
+	
+	if !strings.Contains(stdinView, "Ctrl+C") {
+		t.Error("Stdin input view should include Ctrl+C shortcut to quit")
+	}
+	
+	// Test with empty source content
+	emptySourceModel := Model{
+		stdinInput:    stdinTA,
+		sourceContent: "",
+	}
+	
+	emptySourceView := renderStdinInputView(emptySourceModel)
+	
+	// 6. Should not mention source file if no source content exists
+	if strings.Contains(emptySourceView, "Source file") {
+		t.Error("Stdin input view should not mention source file if no source content exists")
+	}
+	
+	// 7. Should include helpful tips or examples for resume content
+	if !strings.Contains(stdinView, "Tips:") || !strings.Contains(stdinView, "Example:") {
+		t.Error("Stdin input view should include helpful tips or examples")
 	}
 }

@@ -280,9 +280,7 @@ func (m Model) View() string {
 		content = renderSourceFileInputView(m)
 	
 	case stateInputStdin:
-		content = "Tell us about your experience, skills, and qualifications:\n\n"
-		content += m.stdinInput.View() + "\n\n"
-		content += "Ctrl+D when finished, Ctrl+C to quit."
+		content = renderStdinInputView(m)
 	
 	case stateConfirmGenerate:
 		content = "Ready to generate your resume!\n\n"
