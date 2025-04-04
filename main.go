@@ -52,7 +52,20 @@ func main() {
 		}
 	}
 	
+	// Read stream-of-consciousness input from stdin
+	stdinContent, err := input.ReadFromStdin()
+	if err != nil {
+		log.Fatalf("Error reading from stdin: %v", err)
+	}
+	
+	if len(stdinContent) > 0 {
+		fmt.Println("Successfully read input from stdin")
+	} else {
+		fmt.Println("Warning: No input received from stdin")
+	}
+	
 	// Use model in the future for API calls
 	_ = model // Prevent unused variable warning
 	_ = sourceContent // Prevent unused variable warning
+	_ = stdinContent // Prevent unused variable warning
 }

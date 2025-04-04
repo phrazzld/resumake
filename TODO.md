@@ -49,7 +49,7 @@
   - Dependencies: CLI flag parsing
   - Priority: High
 
-- [ ] Implement stdin reading
+- [x] Implement stdin reading
   - Description: Read stream-of-consciousness input from stdin with appropriate user prompts
   - Dependencies: None
   - Priority: High
