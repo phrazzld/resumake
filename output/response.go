@@ -17,8 +17,25 @@ var FinishReasonMessages = map[genai.FinishReason]string{
 }
 
 // ProcessResponseContent processes a Gemini API response and extracts valid Markdown content.
-// It validates the response, extracts text, and ensures it's properly formatted Markdown.
-// Returns the processed Markdown content and any error that occurred.
+// It handles the entire pipeline from raw API response to validated Markdown:
+// 1. Validates the response structure for completeness
+// 2. Checks for error conditions like safety filters or truncation
+// 3. Extracts raw text from the response
+// 4. Validates and cleans the Markdown
+//
+// Parameters:
+//   - response: The raw response from the Gemini API
+//
+// Returns:
+//   - string: The processed, validated, and cleaned Markdown content
+//   - error: Any error encountered during processing
+//
+// Example:
+//
+//	markdownContent, err := output.ProcessResponseContent(apiResponse)
+//	if err != nil {
+//	    log.Fatalf("Failed to process API response: %v", err)
+//	}
 func ProcessResponseContent(response *genai.GenerateContentResponse) (string, error) {
 	// Input validation
 	if response == nil {
@@ -69,8 +86,23 @@ func ProcessResponseContent(response *genai.GenerateContentResponse) (string, er
 }
 
 // ExtractAndValidateMarkdown extracts and validates Markdown content from raw text.
-// It ensures the text contains valid Markdown syntax and formatting.
-// Returns the validated Markdown content and any error that occurred.
+// It serves as a bridge between the raw text extraction from API responses and
+// the Markdown validation and cleaning functionality. This ensures that the text
+// is properly formatted as Markdown before being used as output.
+//
+// Parameters:
+//   - responseText: The raw text extracted from the API response
+//
+// Returns:
+//   - string: The validated and cleaned Markdown content
+//   - error: Any error encountered during validation or preparation
+//
+// Example:
+//
+//	markdown, err := output.ExtractAndValidateMarkdown(rawText)
+//	if err != nil {
+//	    log.Fatalf("Invalid markdown in response: %v", err)
+//	}
 func ExtractAndValidateMarkdown(responseText string) (string, error) {
 	// Validate the text as Markdown
 	if err := ValidateMarkdown(responseText); err != nil {

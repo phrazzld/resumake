@@ -7,14 +7,34 @@ import (
 	"strings"
 )
 
-// MaxFileSize is the maximum allowed file size in bytes (10MB)
+// MaxFileSize is the maximum allowed file size in bytes (10MB).
+// Files larger than this limit will be rejected to prevent memory issues.
 const MaxFileSize = 10 * 1024 * 1024
 
-// SupportedFileExtensions contains the allowed file extensions
+// SupportedFileExtensions contains the allowed file extensions for resume files.
+// The application will warn but not block if the file has a different extension.
 var SupportedFileExtensions = []string{".txt", ".md", ".markdown"}
 
 // ReadSourceFile reads the content of a file at the given path.
-// Returns the file content as a string and any error that occurred.
+// It performs several validation checks before reading the file:
+// - Verifies the file exists and is accessible
+// - Confirms it's a regular file (not a directory or special file)
+// - Ensures the file size is within the maximum allowed limit
+// - Warns if the file extension is not in the supported list
+//
+// Parameters:
+//   - filePath: The path to the file to read
+//
+// Returns:
+//   - string: The file content as a string
+//   - error: Any error that occurred during validation or reading
+//
+// Example:
+//
+//	content, err := input.ReadSourceFile("my_resume.md")
+//	if err != nil {
+//	    log.Fatalf("Error reading source file: %v", err)
+//	}
 func ReadSourceFile(filePath string) (string, error) {
 	// Check if the file exists
 	fileInfo, err := os.Stat(filePath)
@@ -62,8 +82,26 @@ func ReadSourceFile(filePath string) (string, error) {
 }
 
 // ReadSourceFileFromFlags reads a source file if one is specified in the flags.
-// Returns the file content as a string, a boolean indicating if a file was read,
-// and any error that occurred.
+// It provides a convenient way to conditionally read a file based on command-line flags.
+// If no source path is specified in the flags, it returns empty content.
+//
+// Parameters:
+//   - flags: The parsed command-line flags
+//
+// Returns:
+//   - string: The file content as a string (empty if no file specified)
+//   - bool: True if a file was read, false if no file was specified
+//   - error: Any error that occurred during file reading
+//
+// Example:
+//
+//	content, fileRead, err := input.ReadSourceFileFromFlags(flags)
+//	if err != nil {
+//	    log.Fatalf("Error reading source file: %v", err)
+//	}
+//	if fileRead {
+//	    fmt.Printf("Successfully read source file: %s\n", flags.SourcePath)
+//	}
 func ReadSourceFileFromFlags(flags Flags) (string, bool, error) {
 	// If no source file is specified, return empty content
 	if flags.SourcePath == "" {

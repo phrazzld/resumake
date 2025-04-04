@@ -1,3 +1,9 @@
+// Package output handles the processing and writing of resume content.
+//
+// It provides functionality for validating and cleaning Markdown content,
+// processing API responses, and writing the final resume to a file.
+// The package ensures that output is properly formatted, validated, and
+// written to the user's requested destination.
 package output
 
 import (
@@ -31,8 +37,26 @@ var (
 const MinimumMarkdownLength = 10
 
 // ValidateMarkdown checks if the provided content is valid Markdown.
-// It verifies the presence of basic Markdown syntax and proper formatting.
-// Returns an error if the content is not valid Markdown.
+// It verifies the presence of basic Markdown syntax elements and proper formatting.
+// This function ensures that the output meets minimum quality standards
+// before being presented to the user.
+//
+// Validation checks include:
+// - Minimum content length
+// - Presence of at least one Markdown feature (headers, lists, etc.)
+// - Proper formatting of headers with spaces after # characters
+//
+// Parameters:
+//   - content: The Markdown content to validate
+//
+// Returns:
+//   - error: An error describing validation failures, or nil if valid
+//
+// Example:
+//
+//	if err := output.ValidateMarkdown(generatedContent); err != nil {
+//	    log.Fatalf("Invalid Markdown content: %v", err)
+//	}
 func ValidateMarkdown(content string) error {
 	// Check for minimum content length
 	if len(content) < MinimumMarkdownLength {
@@ -73,8 +97,26 @@ func ValidateMarkdown(content string) error {
 }
 
 // CleanMarkdown normalizes and cleans Markdown content for consistent formatting.
-// It handles line endings, spacing, and structure to ensure properly formatted Markdown.
-// Returns the cleaned Markdown content.
+// It applies a series of transformations to ensure the output is well-structured
+// and formatted according to Markdown best practices. This function is essential
+// for producing professional-looking resumes with consistent formatting.
+//
+// Cleaning operations include:
+// - Normalizing line endings to Unix-style (\n)
+// - Trimming leading and trailing whitespace
+// - Ensuring proper spacing around headers and list items
+// - Removing excessive blank lines
+// - Ensuring consistent spacing patterns
+//
+// Parameters:
+//   - content: The raw Markdown content to clean
+//
+// Returns:
+//   - string: The cleaned and normalized Markdown content
+//
+// Example:
+//
+//	cleanContent := output.CleanMarkdown(rawMarkdown)
 func CleanMarkdown(content string) string {
 	// Normalize line endings
 	content = strings.ReplaceAll(content, "\r\n", "\n")
@@ -136,7 +178,23 @@ func formatMarkdown(content string) string {
 }
 
 // PrepareForOutput validates and cleans Markdown content for output.
-// Returns the prepared Markdown content and any error that occurred.
+// This is a higher-level function that combines validation and cleaning
+// to ensure the content is both valid and properly formatted before writing
+// to a file or displaying to the user.
+//
+// Parameters:
+//   - content: The raw Markdown content to prepare
+//
+// Returns:
+//   - string: The validated and cleaned Markdown content
+//   - error: An error if validation fails, nil otherwise
+//
+// Example:
+//
+//	cleanContent, err := output.PrepareForOutput(rawMarkdown)
+//	if err != nil {
+//	    log.Fatalf("Failed to prepare content: %v", err)
+//	}
 func PrepareForOutput(content string) (string, error) {
 	// Validate the Markdown content
 	if err := ValidateMarkdown(content); err != nil {

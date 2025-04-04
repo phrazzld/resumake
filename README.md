@@ -1,10 +1,10 @@
-# Resumake
+# resumake
 
 A CLI tool for generating professional resumes using AI.
 
 ## Overview
 
-Resumake is a command-line tool that uses the Gemini API to transform your stream-of-consciousness thoughts or existing resume into a polished, professional resume in Markdown format. Simply provide your professional experience, skills, and background, and Resumake will generate a well-structured resume.
+resumake is a command-line tool that uses the Gemini API to transform your stream-of-consciousness thoughts or existing resume into a polished, professional resume in Markdown format. Simply provide your professional experience, skills, and background, and resumake will generate a well-structured resume.
 
 ## Features
 
@@ -37,7 +37,7 @@ mv resumake /usr/local/bin/
 
 ## Configuration
 
-Resumake requires a Gemini API key to function. You can obtain one from the [Google AI Studio](https://makersuite.google.com/app/apikey).
+resumake requires a Gemini API key to function. You can obtain one from the [Google AI Studio](https://makersuite.google.com/app/apikey).
 
 Set your API key as an environment variable:
 
@@ -56,13 +56,13 @@ source ~/.bashrc
 
 ### Basic Usage
 
-Run Resumake and enter your professional experience:
+Run resumake and enter your professional experience:
 
 ```bash
 resumake
 ```
 
-This will prompt you to enter your professional information. Type or paste your content, then press Ctrl+D (Unix) or Ctrl+Z followed by Enter (Windows) to finish. Resumake will generate a resume and save it as `resume_out.md`.
+This will prompt you to enter your professional information. Type or paste your content, then press Ctrl+D (Unix) or Ctrl+Z followed by Enter (Windows) to finish. resumake will generate a resume and save it as `resume_out.md`.
 
 ### Using an Existing Resume
 
@@ -72,7 +72,7 @@ Provide an existing resume file to refine or enhance it:
 resumake -source existing_resume.md
 ```
 
-Resumake will use your existing resume as a foundation and still prompt you for additional input.
+resumake will use your existing resume as a foundation and still prompt you for additional input.
 
 ### Specifying Output File
 
@@ -88,7 +88,7 @@ Input:
 ```
 I've been a software engineer for 5 years. Started at Amazon Web Services
 as a junior developer in 2018 working on EC2. Promoted to SDE II in 2020.
-Moved to Google in 2021 as a Senior Software Engineer working on 
+Moved to Google in 2021 as a Senior Software Engineer working on
 Cloud Storage. I know Python, Go, JavaScript, and some Rust.
 Bachelor's in Computer Science from MIT in 2017.
 ```
@@ -123,7 +123,7 @@ Experienced Software Engineer with 5 years of expertise in cloud infrastructure 
 
 ## Limitations
 
-- Resumake currently only outputs Markdown format
+- resumake currently only outputs Markdown format
 - The quality of the resume depends on the detail and clarity of your input
 - API rate limits may apply depending on your Gemini API key tier
 

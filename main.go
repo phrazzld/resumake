@@ -1,3 +1,20 @@
+// Package main provides the entry point for the resumake application.
+//
+// Resumake is a command-line tool that generates professional resumes using the Gemini API.
+// It takes a stream-of-consciousness text input from the user (optionally combined with
+// an existing resume) and transforms it into a polished, well-structured resume in Markdown format.
+//
+// The main package orchestrates the entire process flow:
+// 1. Parsing command-line flags
+// 2. Retrieving the API key from environment variables
+// 3. Initializing the Gemini API client
+// 4. Reading the source file (if provided)
+// 5. Reading user input from stdin
+// 6. Building a prompt from the inputs
+// 7. Sending the prompt to the Gemini API
+// 8. Processing the response and extracting Markdown content
+// 9. Writing the generated resume to a file
+// 10. Displaying a completion message with next steps
 package main
 
 import (
