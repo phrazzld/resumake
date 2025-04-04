@@ -1,7 +1,5 @@
 # BACKLOG
 
-- ✅ use bubbletea to make resumake a lightweight tui ux
-- ✅ add progress indicators/spinners, especially during the api call
 - provide more verbose logging/debugging options (`--verbose`)
 - implement a more robust stream-of-consciousness capture (e.g., opening `$EDITOR`). should also support quite extensive input; we're working with a model that supports over a million tokens of context
 - should be allowed to include an arbitrary number of text/markdown files as context
@@ -10,3 +8,4 @@
 - support flow for fine-tuning resume given a particular job posting / description
 - generate cover letters when generating resume fine tuned on a particular job posting
 - integrate with github to pull contributions / activity as context
+- add optional llm-generated clarifying questions steps to gather additional context before generating resume / cover letter
