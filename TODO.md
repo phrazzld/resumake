@@ -39,7 +39,7 @@
   - Priority: High
 
 ## Input Handling
-- [ ] Implement CLI flag parsing
+- [x] Implement CLI flag parsing
   - Description: Set up the -source flag for optional existing resume file
   - Dependencies: None
   - Priority: High
