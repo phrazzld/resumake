@@ -29,7 +29,7 @@
   - Dependencies: TUI model implementation
   - Priority: Medium
 
-- [ ] Implement command pattern for core logic
+- [x] Implement command pattern for core logic
   - Description: Create tea.Cmd functions to wrap existing logic (file reading, API calls)
   - Dependencies: TUI model implementation
   - Priority: High

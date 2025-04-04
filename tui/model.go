@@ -67,6 +67,10 @@ type Model struct {
 	// Flag-provided values
 	flagSourcePath string
 	flagOutputPath string
+	
+	// Status messages
+	progressStep  string
+	progressMsg   string
 }
 
 // NewModel creates a new Model with default values.
@@ -118,6 +122,43 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	
 	switch msg := msg.(type) {
+	// Handle custom messages from commands
+	case FileReadResultMsg:
+		if msg.Success {
+			m.sourceContent = msg.Content
+		} else {
+			m.state = stateResultError
+			m.errorMsg = msg.Error.Error()
+			return m, nil
+		}
+		
+	case APIInitResultMsg:
+		if !msg.Success {
+			m.state = stateResultError
+			m.errorMsg = msg.Error.Error()
+			return m, nil
+		}
+		
+	case APIResultMsg:
+		if msg.Success {
+			m.state = stateResultSuccess
+			m.outputPath = msg.OutputPath
+			m.resultMessage = fmt.Sprintf("%d", len(msg.Content))
+		} else {
+			m.state = stateResultError
+			m.errorMsg = msg.Error.Error()
+		}
+		return m, nil
+		
+	case StdinSubmitMsg:
+		m.stdinContent = msg.Content
+		m.state = stateConfirmGenerate
+		return m, nil
+		
+	case ProgressUpdateMsg:
+		m.progressStep = msg.Step
+		m.progressMsg = msg.Message
+		
 	case tea.KeyMsg:
 		// Global key handlers
 		switch msg.Type {
@@ -153,10 +194,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, inputCmd)
 			
 			if msg.Type == tea.KeyEnter {
-				// TODO: Implement file reading command
-				m.sourceContent = m.sourcePathInput.Value() // Store the path for future file reading
+				// Use the file reading command to read the source file
+				filePath := m.sourcePathInput.Value()
 				m.state = stateInputStdin
-				cmds = append(cmds, m.stdinInput.Focus())
+				cmds = append(cmds, 
+					ReadSourceFileCmd(filePath),  // Read the file asynchronously
+					m.stdinInput.Focus(),         // Focus the text area
+				)
 			}
 		
 		case stateInputStdin:
@@ -167,8 +211,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			
 			// Ctrl+D to finish input and proceed
 			if msg.Type == tea.KeyCtrlD {
-				m.stdinContent = m.stdinInput.Value() // Store the content
-				m.state = stateConfirmGenerate
+				// Submit the stdin input using our command
+				cmds = append(cmds, SubmitStdinInputCmd(m.stdinInput.Value()))
 			}
 		
 		case stateConfirmGenerate:
@@ -176,12 +220,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.state = stateGenerating
 				
 				// Use provided output path from flags if available
+				outputPath := ""
 				if m.flagOutputPath != "" {
-					m.outputPath = m.flagOutputPath
+					outputPath = m.flagOutputPath
 				}
+				
+				// Add progress update and API commands
+				cmds = append(cmds, 
+					SendProgressUpdateCmd("Starting", "Initializing resume generation..."),
+					GenerateResumeCmd(m.sourceContent, m.stdinContent, outputPath, false),
+				)
 			} else if msg.Type == tea.KeyEsc {
 				m.state = stateInputStdin
 				cmds = append(cmds, m.stdinInput.Focus())
+			}
+			
+		case stateResultSuccess, stateResultError:
+			// Any key in final states quits the application
+			if msg.Type == tea.KeyEnter {
+				return m, tea.Quit
 			}
 		}
 	
@@ -241,7 +298,7 @@ func (m Model) View() string {
 	case stateConfirmGenerate:
 		content = "Ready to generate your resume!\n\n"
 		if m.sourceContent != "" {
-			content += "Source file: " + m.sourceContent + "\n"
+			content += "Source file: " + m.sourcePathInput.Value() + "\n"
 		}
 		content += "Input length: " + fmt.Sprintf("%d", len(m.stdinContent)) + " characters\n\n"
 		
@@ -254,12 +311,20 @@ func (m Model) View() string {
 	
 	case stateGenerating:
 		content = "Generating your resume...\n\n"
-		content += m.spinner.View() + " Please wait, this may take a minute."
+		content += m.spinner.View() + " Please wait, this may take a minute.\n\n"
+		
+		// Show progress information if available
+		if m.progressStep != "" {
+			content += fmt.Sprintf("Step: %s\n", m.progressStep)
+		}
+		if m.progressMsg != "" {
+			content += m.progressMsg
+		}
 	
 	case stateResultSuccess:
 		content = "----- RESUME GENERATION COMPLETE -----\n"
 		content += "Output file:      " + m.outputPath + "\n"
-		content += "Content length:   " + m.resultMessage + "\n\n"
+		content += "Content length:   " + m.resultMessage + " characters\n\n"
 		content += "Next steps:\n"
 		content += "  * Review your resume at " + m.outputPath + "\n"
 		content += "  * Make any necessary edits\n"
