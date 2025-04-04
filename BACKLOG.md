@@ -1,7 +1,7 @@
 # BACKLOG
 
-- use bubbletea to make resumake a lightweight tui ux
-- add progress indicators/spinners, especially during the api call
+- ✅ use bubbletea to make resumake a lightweight tui ux
+- ✅ add progress indicators/spinners, especially during the api call
 - provide more verbose logging/debugging options (`--verbose`)
 - implement a more robust stream-of-consciousness capture (e.g., opening `$EDITOR`). should also support quite extensive input; we're working with a model that supports over a million tokens of context
 - should be allowed to include an arbitrary number of text/markdown files as context
