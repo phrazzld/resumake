@@ -1,28 +1,112 @@
 # TODO
 
-## Help Functionality Fix
-- [x] Add special handling for flag.ErrHelp in main.go
-  - Description: Modify main.go to detect when help flag is used and exit cleanly with code 0
+## Bubble Tea TUI Implementation
+
+### Setup & Structure
+- [x] Add Bubble Tea and related dependencies
+  - Description: Add github.com/charmbracelet/bubbletea, lipgloss, and bubbles to go.mod
   - Dependencies: None
   - Priority: High
 
-- [x] Add imports for flag and os packages in main.go
-  - Description: Import the flag package to access ErrHelp and os package for Exit function
-  - Dependencies: None
+- [ ] Create basic TUI package structure
+  - Description: Create tui directory and basic file structure (model.go, messages.go, etc.)
+  - Dependencies: Added dependencies
   - Priority: High
 
-- [x] Create integration test for help flag
-  - Description: Add test in main_test.go to verify help flag exits cleanly with proper output
-  - Dependencies: Help flag implementation in main.go
+- [ ] Design TUI model and states
+  - Description: Define the state enum and model struct with all required fields
+  - Dependencies: TUI package structure
+  - Priority: High
+
+### Main Application Flow
+- [ ] Refactor main.go for TUI
+  - Description: Update main.go to initialize and run Bubble Tea program
+  - Dependencies: TUI model design
+  - Priority: High
+
+- [ ] Implement initial welcome view
+  - Description: Create welcome screen with API key check and instructions
+  - Dependencies: TUI model implementation
   - Priority: Medium
 
-- [x] Review/update unit tests for flag handling
-  - Description: Ensure input/flags_test.go covers flag.ErrHelp being returned when help is requested
-  - Dependencies: None
+- [ ] Implement command pattern for core logic
+  - Description: Create tea.Cmd functions to wrap existing logic (file reading, API calls)
+  - Dependencies: TUI model implementation
+  - Priority: High
+
+### Input Handling
+- [ ] Implement source file input view
+  - Description: Create view for inputting source file path with textinput bubble
+  - Dependencies: TUI model and welcome view
   - Priority: Medium
 
-## Documentation
-- [x] Update documentation if necessary
-  - Description: If any changes were made to flag handling behavior, update relevant documentation
-  - Dependencies: Implementation tasks
+- [ ] Implement stdin text area input
+  - Description: Create view for multi-line text input using textarea bubble
+  - Dependencies: TUI model implementation
+  - Priority: Medium
+
+- [ ] Handle flag pre-filling
+  - Description: Use flag values to pre-fill TUI inputs if provided
+  - Dependencies: Source file and stdin input views
   - Priority: Low
+
+### API Integration & Processing
+- [ ] Implement generating state view
+  - Description: Create view with spinner and status messages during API call
+  - Dependencies: Input handling views
+  - Priority: Medium
+
+- [ ] Wrap API call logic in tea.Cmd
+  - Description: Create command function to handle API requests asynchronously
+  - Dependencies: Input handling implementation
+  - Priority: High
+
+- [ ] Implement progress updates during generation
+  - Description: Add ability to show progress steps during generation process
+  - Dependencies: Generating state view
+  - Priority: Low
+
+### Result Handling
+- [ ] Implement success view
+  - Description: Create view to show successful resume generation with output path
+  - Dependencies: API integration
+  - Priority: Medium
+
+- [ ] Implement error view
+  - Description: Create view to display detailed error messages
+  - Dependencies: API integration
+  - Priority: Medium
+
+### Styling & Polish
+- [ ] Create consistent styling with lipgloss
+  - Description: Define styles for UI components in styles.go
+  - Dependencies: All views implemented
+  - Priority: Low
+
+- [ ] Add keyboard shortcuts help
+  - Description: Add visible keyboard shortcut hints in views (Ctrl+C to quit, etc.)
+  - Dependencies: All views implemented
+  - Priority: Low
+
+### Testing
+- [ ] Update existing tests
+  - Description: Modify main_test.go to work with new TUI approach
+  - Dependencies: All implementation complete
+  - Priority: Medium
+
+- [ ] Add unit tests for TUI model update logic
+  - Description: Create tests for state transitions and message handling
+  - Dependencies: TUI model implementation
+  - Priority: Medium
+
+- [ ] Add tests for command functions
+  - Description: Test tea.Cmd functions with mocked dependencies
+  - Dependencies: Command implementation
+  - Priority: Medium
+
+## Assumptions & Clarifications
+- The existing API integration will remain unchanged, just wrapped in tea.Cmd functions
+- Flags will be used to pre-fill TUI inputs rather than bypassing the TUI completely
+- Basic keyboard controls will include Ctrl+C to quit, arrow keys for navigation, Enter to submit
+- Stdin input will be terminated with Ctrl+D (standard convention)
+- Error handling will be comprehensive with helpful messages in the TUI
