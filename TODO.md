@@ -6,7 +6,7 @@
   - Dependencies: None
   - Priority: High
 
-- [ ] Modify Model.Update for centralized initialization
+- [x] Modify Model.Update for centralized initialization
   - Description: Update the Model.Update method to initialize the API client once when transitioning to a state that requires it
   - Dependencies: Added API client fields to Model
   - Priority: High

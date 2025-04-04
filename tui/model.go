@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	
 	"github.com/charmbracelet/bubbles/spinner"
@@ -135,6 +136,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	
 	switch msg := msg.(type) {
+	// Handle tea.QuitMsg to clean up resources
+	case tea.QuitMsg:
+		m = cleanupAPIClient(m)
+		return m, tea.Quit
+		
 	// Handle custom messages from commands
 	case FileReadResultMsg:
 		if msg.Success {
@@ -176,6 +182,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Global key handlers
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
+			m = cleanupAPIClient(m)
 			return m, tea.Quit
 		}
 		
@@ -184,6 +191,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateWelcome:
 			if msg.Type == tea.KeyEnter {
 				if m.apiKeyOk {
+					// Initialize API client here when we confirm a valid API key
+					// This is the earliest point where we need the API client
+					var err error
+					m, err = initializeAPIClient(m)
+					if err != nil {
+						m.state = stateResultError
+						m.errorMsg = err.Error()
+						return m, nil
+					}
+					
 					// If a source path was provided via flags, we can pre-fill it
 					if m.flagSourcePath != "" {
 						// We'll still go to the input screen but with pre-filled value
@@ -251,6 +268,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateResultSuccess, stateResultError:
 			// Any key in final states quits the application
 			if msg.Type == tea.KeyEnter {
+				m = cleanupAPIClient(m)
 				return m, tea.Quit
 			}
 		}
@@ -345,6 +363,44 @@ func (m Model) View() string {
 func checkAPIKey() bool {
 	_, err := api.GetAPIKey()
 	return err == nil
+}
+
+// initializeAPIClient initializes the API client and model if needed
+// Returns the modified model and any error that occurred
+func initializeAPIClient(m Model) (Model, error) {
+	// Skip initialization if already done
+	if m.apiClient != nil && m.apiModel != nil {
+		return m, nil
+	}
+	
+	// Get API key
+	apiKey, err := api.GetAPIKey()
+	if err != nil {
+		return m, fmt.Errorf("API key error: %w", err)
+	}
+	
+	// Initialize client and model
+	ctx := context.Background()
+	client, model, err := api.InitializeClient(ctx, apiKey)
+	if err != nil {
+		return m, fmt.Errorf("failed to initialize API client: %w", err)
+	}
+	
+	// Store the instances in the model
+	m.apiClient = client
+	m.apiModel = model
+	
+	return m, nil
+}
+
+// cleanupAPIClient closes the API client if it was initialized
+func cleanupAPIClient(m Model) Model {
+	if m.apiClient != nil {
+		m.apiClient.Close()
+		m.apiClient = nil
+		m.apiModel = nil
+	}
+	return m
 }
 
 // WithSourcePath returns a copy of the model with the source path set
