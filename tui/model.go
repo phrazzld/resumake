@@ -87,10 +87,15 @@ func NewModel() Model {
 	stdinTA.SetWidth(80)
 	stdinTA.SetHeight(20)
 	
-	// Initialize spinner for loading state
+	// Initialize spinner for loading state with more visible spinner
 	sp := spinner.New()
 	sp.Spinner = spinner.Dot
-	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#F2C94C")).Bold(true)
+	// Important: use a spinner with more visible animation frames
+	sp.Spinner = spinner.Spinner{
+		Frames: []string{"⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"},
+		FPS:    12, // Faster animation
+	}
 	
 	// Check API key on startup
 	apiKeyOk := checkAPIKey()
@@ -267,11 +272,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	
-	// Only include spinner.Tick if we're in a state that shows the spinner
+	// Always include spinner.Tick if we're in the generating state
+	// This ensures the spinner animates properly
 	if m.state == stateGenerating {
 		var spinnerCmd tea.Cmd
 		m.spinner, spinnerCmd = m.spinner.Update(msg)
 		cmds = append(cmds, spinnerCmd)
+		
+		// Always ensure the spinner keeps ticking by adding the tick command
+		// This is crucial to keep animation going
+		cmds = append(cmds, m.spinner.Tick)
 	}
 	
 	return m, tea.Batch(cmds...)

@@ -305,45 +305,107 @@ func renderStdinInputView(m Model) string {
 func renderGeneratingView(m Model) string {
 	var content string
 	
-	// Title with animated spinner
-	content += titleStyle.Render("Generating Your Resume")
+	// Helper function to wrap text at a reasonable width
+	wrap := func(text string, width int) string {
+		if width <= 0 {
+			width = 80 // Default to 80 if we don't have width info
+		}
+		
+		// Simple word wrapping
+		words := strings.Fields(text)
+		if len(words) == 0 {
+			return ""
+		}
+		
+		result := words[0]
+		lineLen := len(words[0])
+		
+		for _, word := range words[1:] {
+			if lineLen+len(word)+1 > width {
+				result += "\n" + word
+				lineLen = len(word)
+			} else {
+				result += " " + word
+				lineLen += len(word) + 1
+			}
+		}
+		
+		return result
+	}
+	
+	// Calculate display width
+	displayWidth := m.width
+	if displayWidth > 80 {
+		displayWidth = 80 // Cap at 80 chars for readability
+	}
+	if displayWidth < 40 {
+		displayWidth = 40 // Minimum width
+	}
+	
+	// Title with more prominent styling
+	generatingTitle := titleStyle.Copy().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
+		Padding(1, 2).
+		Render("Generating Your Resume")
+	
+	content += generatingTitle
 	content += "\n\n"
 	
-	// Spinner and status
-	content += m.spinner.View() + " " + progressStyle.Render("Processing your information")
+	// Create a styled box for the spinner and processing info
+	spinnerBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(accentColor).
+		Padding(1, 2).
+		Render(m.spinner.View() + " " + progressStyle.Render("Processing your information"))
+	
+	content += spinnerBox
 	content += "\n\n"
 	
-	// Input information
+	// Input information with wrapping
 	totalChars := len(m.stdinContent) + len(m.sourceContent)
-	content += fmt.Sprintf("Processing %d characters of input...", totalChars)
+	content += wrap(fmt.Sprintf("Processing %d characters of input...", totalChars), displayWidth-5)
 	content += "\n"
 	
 	// Source file info if provided
 	if m.sourceContent != "" {
-		content += "Source file: " + m.sourcePathInput.Value()
+		sourceInfo := "Source file: " + m.sourcePathInput.Value()
+		content += wrap(sourceInfo, displayWidth-5)
 		content += "\n"
 	}
 	
-	// Estimated time
+	// Estimated time with better styling
 	content += "\n"
-	content += infoStyle.Render("This may take up to 60 seconds depending on the input size.")
+	timeEstimate := "This may take up to 60 seconds depending on the input size."
+	content += infoStyle.Render(wrap(timeEstimate, displayWidth-5))
 	content += "\n\n"
 	
-	// Progress information
+	// Progress information with proper wrapping
 	if m.progressStep != "" && m.progressMsg != "" {
-		content += stepStyle.Render("Step: " + m.progressStep)
-		content += "\n"
-		content += m.progressMsg
+		// Create a progress box
+		progressContent := stepStyle.Render("Step: " + m.progressStep) + "\n" +
+			wrap(m.progressMsg, displayWidth-10)
+		
+		progressBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(secondaryColor).
+			Padding(1, 2).
+			Render(progressContent)
+			
+		content += progressBox
 		content += "\n\n"
 	} else {
-		content += "Please wait while we generate your resume..."
+		content += wrap("Please wait while we generate your resume...", displayWidth-5)
 		content += "\n\n"
 	}
 	
-	// Additional status info
-	content += "The Gemini API is analyzing your experience and crafting a professional resume."
+	// Additional status info with proper wrapping
+	statusMsg1 := "The Gemini API is analyzing your experience and crafting a professional resume."
+	statusMsg2 := "You'll be able to review and save the result when it's complete."
+	
+	content += wrap(statusMsg1, displayWidth-5)
 	content += "\n"
-	content += "You'll be able to review and save the result when it's complete."
+	content += wrap(statusMsg2, displayWidth-5)
 	
 	return content
 }
