@@ -13,7 +13,7 @@
   - Dependencies: Added dependencies
   - Priority: High
 
-- [ ] Design TUI model and states
+- [x] Design TUI model and states
   - Description: Define the state enum and model struct with all required fields
   - Dependencies: TUI package structure
   - Priority: High
