@@ -159,6 +159,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		
 	case APIResultMsg:
+		// Before changing state, ensure we've captured the final spinner state
+		// This handles proper spinner cleanup during state transitions
+		if m.state == stateGenerating {
+			m.spinner, _ = m.spinner.Update(nil)
+		}
+		
 		if msg.Success {
 			m.state = stateResultSuccess
 			m.outputPath = msg.OutputPath
@@ -293,21 +299,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.stdinInput.SetHeight(textareaHeight)
 	}
 	
-	// If no commands were queued from above, don't include spinner.Tick
-	if len(cmds) == 0 {
-		return m, nil
-	}
-	
-	// Always include spinner.Tick if we're in the generating state
-	// This ensures the spinner animates properly
+	// Handle spinner updates based on state
 	if m.state == stateGenerating {
 		var spinnerCmd tea.Cmd
+		// Update the spinner regardless of msg type to ensure animation consistency
 		m.spinner, spinnerCmd = m.spinner.Update(msg)
-		cmds = append(cmds, spinnerCmd)
 		
 		// Always ensure the spinner keeps ticking by adding the tick command
 		// This is crucial to keep animation going
-		cmds = append(cmds, m.spinner.Tick)
+		if len(cmds) == 0 {
+			// If no other commands were queued, return just the spinner commands
+			return m, tea.Batch(spinnerCmd, m.spinner.Tick)
+		}
+		
+		// Otherwise, append spinner commands to the existing command batch
+		cmds = append(cmds, spinnerCmd, m.spinner.Tick)
+	} else if len(cmds) == 0 {
+		// If not in generating state and no commands were queued, return nil command
+		// This ensures we don't keep ticking when we don't need the spinner
+		return m, nil
 	}
 	
 	return m, tea.Batch(cmds...)

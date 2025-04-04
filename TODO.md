@@ -27,22 +27,22 @@
   - Priority: Medium
 
 ## Text Wrapping Utility
-- [ ] Create utils.go file
+- [x] Create utils.go file
   - Description: Create new file in tui package for utility functions
   - Dependencies: None
   - Priority: High
 
-- [ ] Implement wrapText function
+- [x] Implement wrapText function
   - Description: Extract wrap function from views.go into a shared utility function
   - Dependencies: Created utils.go file
   - Priority: High
 
-- [ ] Update view rendering to use shared utility
+- [x] Update view rendering to use shared utility
   - Description: Replace local wrap functions in renderWelcomeView and renderGeneratingView with calls to the new utility
   - Dependencies: Implemented wrapText function
   - Priority: High
 
-- [ ] Create utils_test.go for testing
+- [x] Create utils_test.go for testing
   - Description: Add unit tests for the wrapText function, covering various edge cases
   - Dependencies: Implemented wrapText function
   - Priority: Medium
@@ -80,17 +80,17 @@
   - Priority: Low
 
 ## Spinner Animation Fix
-- [ ] Review current spinner implementation
+- [x] Review current spinner implementation
   - Description: Analyze the spinner animation issues mentioned in the CODE_REVIEW.md
   - Dependencies: None
   - Priority: High
 
-- [ ] Implement spinner animation improvements
+- [x] Implement spinner animation improvements
   - Description: Ensure spinner continues to animate correctly when state changes
   - Dependencies: Reviewed spinner implementation
   - Priority: High
 
-- [ ] Test spinner animation
+- [x] Test spinner animation
   - Description: Verify spinner animation works consistently across all states
   - Dependencies: Implemented spinner improvements
   - Priority: Medium
