@@ -12,7 +12,7 @@
   - Priority: High
 
 ## Core Architecture
-- [ ] Implement main package structure
+- [x] Implement main package structure
   - Description: Create basic file structure with main.go and supporting packages
   - Dependencies: None
   - Priority: High
@@ -99,7 +99,7 @@
   - Dependencies: Implementation
   - Priority: Medium
 
-- [ ] Create usage documentation
+- [x] Create usage documentation
   - Description: Add README with installation and usage instructions
   - Dependencies: Implementation and testing
   - Priority: Medium
