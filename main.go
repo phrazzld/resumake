@@ -97,7 +97,13 @@ func main() {
 		log.Fatalf("Error writing output file: %v", err)
 	}
 	
-	// Display success message
-	fmt.Printf("Successfully generated resume with %d characters\n", len(markdownContent))
-	fmt.Printf("Resume saved to: %s\n", outputPath)
+	// Display completion message
+	fmt.Println("\n----- RESUME GENERATION COMPLETE -----")
+	fmt.Printf("Output file:      %s\n", outputPath)
+	fmt.Printf("Content length:   %d characters\n", len(markdownContent))
+	fmt.Println("\nNext steps:")
+	fmt.Printf("  * Review your resume at %s\n", outputPath)
+	fmt.Println("  * Make any necessary edits to improve formatting")
+	fmt.Println("  * Convert to other formats as needed (PDF, DOCX)")
+	fmt.Println("---------------------------------------")
 }
