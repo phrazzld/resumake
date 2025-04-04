@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/google/generative-ai-go/genai"
 	"github.com/phrazzld/resumake/api"
-	"google.golang.org/api/option"
 )
 
 func main() {
@@ -19,14 +17,17 @@ func main() {
 		log.Fatal(err)
 	}
 	
-	// Initialize client for future use
+	// Initialize client and model for future use
 	ctx := context.Background()
-	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
+	client, model, err := api.InitializeClient(ctx, apiKey)
 	if err != nil {
-		log.Fatalf("Failed to create Gemini client: %v", err)
+		log.Fatalf("Failed to initialize Gemini client: %v", err)
 	}
 	defer client.Close()
 	
 	// This is just a placeholder and will be replaced with actual implementation
-	fmt.Println("Successfully initialized Gemini client")
+	fmt.Printf("Successfully initialized Gemini client with model: %s\n", api.DefaultModelName)
+	
+	// Use model in the future for API calls
+	_ = model // Prevent unused variable warning
 }
