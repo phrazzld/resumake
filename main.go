@@ -19,8 +19,10 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/google/generative-ai-go/genai"
 	"github.com/phrazzld/resumake/api"
@@ -35,6 +37,13 @@ func main() {
 	// Parse command-line flags
 	flags, err := input.ParseFlags()
 	if err != nil {
+		// Check if the error is due to the user requesting help
+		if err == flag.ErrHelp {
+			// The flag package already printed usage information
+			// We just need to exit cleanly
+			os.Exit(0)
+		}
+		// For any other parsing error, log fatally
 		log.Fatalf("Error parsing flags: %v", err)
 	}
 	
