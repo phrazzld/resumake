@@ -56,7 +56,7 @@
   - Dependencies: Input handling views
   - Priority: Medium
 
-- [ ] Wrap API call logic in tea.Cmd
+- [x] Wrap API call logic in tea.Cmd
   - Description: Create command function to handle API requests asynchronously
   - Dependencies: Input handling implementation
   - Priority: High
