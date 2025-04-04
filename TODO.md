@@ -78,18 +78,18 @@
   - Priority: Medium
 
 ### Styling & Polish
-- [ ] Create consistent styling with lipgloss
+- [x] Create consistent styling with lipgloss
   - Description: Define styles for UI components in styles.go
   - Dependencies: All views implemented
   - Priority: Low
 
-- [ ] Add keyboard shortcuts help
+- [x] Add keyboard shortcuts help
   - Description: Add visible keyboard shortcut hints in views (Ctrl+C to quit, etc.)
   - Dependencies: All views implemented
   - Priority: Low
 
 ### Testing
-- [ ] Update existing tests
+- [x] Update existing tests
   - Description: Modify main_test.go to work with new TUI approach
   - Dependencies: All implementation complete
   - Priority: Medium
