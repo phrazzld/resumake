@@ -99,7 +99,7 @@
   - Dependencies: TUI model implementation
   - Priority: Medium
 
-- [ ] Add tests for command functions
+- [x] Add tests for command functions
   - Description: Test tea.Cmd functions with mocked dependencies
   - Dependencies: Command implementation
   - Priority: Medium
