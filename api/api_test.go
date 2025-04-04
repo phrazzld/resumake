@@ -73,6 +73,7 @@ func TestInitializeClient(t *testing.T) {
 		// Check if model is initialized with default model
 		if model == nil {
 			t.Error("Expected model to be initialized, got nil")
+			return // Early return to avoid nil pointer dereference
 		}
 		
 		// Check if system instructions are set
@@ -117,6 +118,7 @@ func TestInitializeClient(t *testing.T) {
 		
 		if model == nil {
 			t.Error("Expected model to be initialized, got nil")
+			return // Early return to avoid nil pointer dereference
 		}
 		
 		// Check if system instructions are set

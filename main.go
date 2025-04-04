@@ -7,6 +7,7 @@ import (
 
 	"github.com/phrazzld/resumake/api"
 	"github.com/phrazzld/resumake/input"
+	"github.com/phrazzld/resumake/prompt"
 )
 
 func main() {
@@ -64,8 +65,13 @@ func main() {
 		fmt.Println("Warning: No input received from stdin")
 	}
 	
-	// Use model in the future for API calls
+	// Build the prompt from source content and stdin input
+	promptContent := prompt.GeneratePromptContent(sourceContent, stdinContent)
+	
+	// Display confirmation that the prompt has been built
+	fmt.Println("Successfully built prompt from inputs")
+	
+	// Store the Gemini model and prompt content for future API calls
 	_ = model // Prevent unused variable warning
-	_ = sourceContent // Prevent unused variable warning
-	_ = stdinContent // Prevent unused variable warning
+	_ = promptContent // Prevent unused variable warning
 }

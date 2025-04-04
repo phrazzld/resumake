@@ -55,7 +55,7 @@
   - Priority: High
 
 ## Prompt Construction
-- [ ] Create dynamic prompt builder
+- [x] Create dynamic prompt builder
   - Description: Combine existing resume and user input into properly formatted prompt
   - Dependencies: File reading and stdin reading
   - Priority: High
