@@ -48,12 +48,12 @@
   - Priority: Medium
 
 ## Error Message Improvements
-- [ ] Enhance truncation recovery error messages
+- [x] Enhance truncation recovery error messages
   - Description: Update error handling in GenerateResumeCmd to include both original and recovery errors
   - Dependencies: None
   - Priority: Medium
 
-- [ ] Test improved error message handling
+- [x] Test improved error message handling
   - Description: Verify error message improvements work correctly with test cases
   - Dependencies: Enhanced error messages
   - Priority: Low

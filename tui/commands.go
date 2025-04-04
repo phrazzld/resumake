@@ -131,7 +131,7 @@ func GenerateResumeCmd(client *genai.Client, model *genai.GenerativeModel, sourc
 				} else {
 					return APIResultMsg{
 						Success: false,
-						Error:   fmt.Errorf("error processing API response: %w", err),
+						Error:   fmt.Errorf("error processing API response: %w (recovery failed: %w)", err, recoverErr),
 					}
 				}
 			} else {
