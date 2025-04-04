@@ -8,7 +8,7 @@
   - Dependencies: None
   - Priority: High
 
-- [ ] Create basic TUI package structure
+- [x] Create basic TUI package structure
   - Description: Create tui directory and basic file structure (model.go, messages.go, etc.)
   - Dependencies: Added dependencies
   - Priority: High
@@ -45,7 +45,7 @@
   - Dependencies: TUI model implementation
   - Priority: Medium
 
-- [ ] Handle flag pre-filling
+- [x] Handle flag pre-filling
   - Description: Use flag values to pre-fill TUI inputs if provided
   - Dependencies: Source file and stdin input views
   - Priority: Low
@@ -61,7 +61,7 @@
   - Dependencies: Input handling implementation
   - Priority: High
 
-- [ ] Implement progress updates during generation
+- [x] Implement progress updates during generation
   - Description: Add ability to show progress steps during generation process
   - Dependencies: Generating state view
   - Priority: Low
