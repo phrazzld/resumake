@@ -27,6 +27,13 @@ var (
 	keyboardHintStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#AAAAAA")).
 		Italic(true)
+		
+	inputLabelStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FFFFFF"))
+		
+	flagValueStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFFFAA"))
 )
 
 // renderWelcomeView generates the welcome screen content
@@ -82,4 +89,48 @@ func renderWelcomeView(m Model) string {
 	return content
 }
 
-// Additional view rendering functions would be implemented here
+// renderSourceFileInputView generates the source file input view content
+func renderSourceFileInputView(m Model) string {
+	var content string
+	
+	// Title
+	content += titleStyle.Render("Source File Input")
+	content += "\n\n"
+	
+	// Instructions and explanation
+	content += "You can optionally provide an existing resume file to use as a starting point."
+	content += "\n"
+	content += "This helps generate a better result by incorporating your existing content."
+	content += "\n\n"
+	
+	// Show if path was provided via flags
+	if m.flagSourcePath != "" {
+		content += infoStyle.Render("A file path was provided from command line flags:")
+		content += "\n"
+		content += flagValueStyle.Render(m.flagSourcePath)
+		content += "\n\n"
+		content += "You can edit this path or leave it as is."
+		content += "\n\n"
+	}
+	
+	// Input field label
+	content += inputLabelStyle.Render("Enter path to existing resume file (optional):")
+	content += "\n"
+	
+	// The actual text input component
+	content += m.sourcePathInput.View()
+	content += "\n\n"
+	
+	// Note about being optional
+	content += "Note: This step is optional. If you don't have an existing resume file,"
+	content += "\n"
+	content += "just press Enter to continue without selecting a file."
+	content += "\n\n"
+	
+	// Keyboard shortcuts
+	content += keyboardHintStyle.Render("• Enter: Continue to next step")
+	content += "\n"
+	content += keyboardHintStyle.Render("• Ctrl+C to quit")
+	
+	return content
+}

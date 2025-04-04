@@ -277,9 +277,7 @@ func (m Model) View() string {
 		content = renderWelcomeView(m)
 	
 	case stateInputSourcePath:
-		content = "Enter the path to an existing resume (optional):\n\n"
-		content += m.sourcePathInput.View() + "\n\n"
-		content += "Press Enter to continue, Ctrl+C to quit."
+		content = renderSourceFileInputView(m)
 	
 	case stateInputStdin:
 		content = "Tell us about your experience, skills, and qualifications:\n\n"

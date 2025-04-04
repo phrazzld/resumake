@@ -35,7 +35,7 @@
   - Priority: High
 
 ### Input Handling
-- [ ] Implement source file input view
+- [x] Implement source file input view
   - Description: Create view for inputting source file path with textinput bubble
   - Dependencies: TUI model and welcome view
   - Priority: Medium
