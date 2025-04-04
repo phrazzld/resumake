@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/google/generative-ai-go/genai"
 	"github.com/phrazzld/resumake/api"
 )
 
@@ -71,6 +72,10 @@ type Model struct {
 	// Status messages
 	progressStep  string
 	progressMsg   string
+	
+	// API client instances
+	apiClient     *genai.Client       // Initialized API client instance
+	apiModel      *genai.GenerativeModel // Initialized model instance
 }
 
 // NewModel creates a new Model with default values.
@@ -110,6 +115,9 @@ func NewModel() Model {
 		// Flag values will be populated with WithSourcePath/WithOutputPath
 		flagSourcePath: "",
 		flagOutputPath: "",
+		// API client instances start as nil and will be initialized as needed
+		apiClient:      nil,
+		apiModel:       nil,
 	}
 }
 
