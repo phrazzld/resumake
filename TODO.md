@@ -94,7 +94,7 @@
   - Dependencies: All implementation complete
   - Priority: Medium
 
-- [ ] Add unit tests for TUI model update logic
+- [x] Add unit tests for TUI model update logic
   - Description: Create tests for state transitions and message handling
   - Dependencies: TUI model implementation
   - Priority: Medium

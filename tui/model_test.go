@@ -1,6 +1,9 @@
 package tui
 
 import (
+	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -41,21 +44,335 @@ func TestModelInitialState(t *testing.T) {
 func TestModelStateTransitions(t *testing.T) {
 	// Test state transitions based on input and conditions
 	
-	// Test: When in welcome state, check API key and transition accordingly
+	t.Run("Welcome to Source Input with valid API key", func(t *testing.T) {
+		// Create model in welcome state with valid API key
+		m := NewModel()
+		m.apiKeyOk = true
+		
+		// Send Enter key
+		updatedModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		model := updatedModel.(Model)
+		
+		// Verify state transition to source input
+		if model.state != stateInputSourcePath {
+			t.Errorf("Expected state to transition to stateInputSourcePath, got %v", model.state)
+		}
+		
+		// Verify a command was returned
+		if cmd == nil {
+			t.Error("Expected a command to be returned")
+		}
+	})
 	
-	// Test: When in source input state, entering a path should trigger file reading
+	t.Run("Welcome to Error with invalid API key", func(t *testing.T) {
+		// Create model in welcome state with invalid API key
+		m := NewModel()
+		m.apiKeyOk = false
+		
+		// Send Enter key
+		updatedModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		model := updatedModel.(Model)
+		
+		// Verify state transition to error
+		if model.state != stateResultError {
+			t.Errorf("Expected state to transition to stateResultError, got %v", model.state)
+		}
+		
+		// Verify error message is set
+		if !strings.Contains(model.errorMsg, "API key") {
+			t.Errorf("Expected error message to mention API key, got: %s", model.errorMsg)
+		}
+	})
 	
-	// Test: When in stdin input state, submitting text should prepare for generation
+	t.Run("Source Input to Stdin Input on Enter", func(t *testing.T) {
+		// Create model in source input state
+		m := NewModel()
+		m.state = stateInputSourcePath
+		m.sourcePathInput.SetValue("/path/to/test.md")
+		
+		// Send Enter key
+		updatedModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		model := updatedModel.(Model)
+		
+		// Verify state transition to stdin input
+		if model.state != stateInputStdin {
+			t.Errorf("Expected state to transition to stateInputStdin, got %v", model.state)
+		}
+		
+		// Verify commands were returned
+		if cmd == nil {
+			t.Error("Expected commands to be returned")
+		}
+	})
 	
-	// Test: When in generating state, receiving success message should transition to success state
+	t.Run("Stdin Input to Confirm Generate on Ctrl+D", func(t *testing.T) {
+		// Create model in stdin input state
+		m := NewModel()
+		m.state = stateInputStdin
+		
+		// Send Ctrl+D key
+		updatedModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlD})
+		
+		// Verify command was returned (SubmitStdinInputCmd)
+		if cmd == nil {
+			t.Error("Expected SubmitStdinInputCmd to be returned")
+		}
+		
+		// Simulate the command result
+		stdinContent := "Test resume content"
+		updatedModel, _ = updatedModel.(Model).Update(StdinSubmitMsg{Content: stdinContent})
+		model := updatedModel.(Model)
+		
+		// Verify state transition to confirm generate
+		if model.state != stateConfirmGenerate {
+			t.Errorf("Expected state to transition to stateConfirmGenerate, got %v", model.state)
+		}
+		
+		// Verify content was stored
+		if model.stdinContent != stdinContent {
+			t.Errorf("Expected stdinContent to be set to %q, got %q", stdinContent, model.stdinContent)
+		}
+	})
 	
-	// Test: Error in any state should transition to error state
+	t.Run("Confirm Generate to Generating on Enter", func(t *testing.T) {
+		// Create model in confirm generate state
+		m := NewModel()
+		m.state = stateConfirmGenerate
+		
+		// Send Enter key
+		updatedModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		model := updatedModel.(Model)
+		
+		// Verify state transition to generating
+		if model.state != stateGenerating {
+			t.Errorf("Expected state to transition to stateGenerating, got %v", model.state)
+		}
+		
+		// Verify commands were returned
+		if cmd == nil {
+			t.Error("Expected commands to be returned")
+		}
+	})
+	
+	// Note: We're intentionally not testing the Esc key in Confirm Generate state
+	// because it requires a deeper level of initialization that is challenging to 
+	// set up in a unit test. This would be better tested in an integration test.
+}
+
+func TestModelMessageHandling(t *testing.T) {
+	// Test handling of different message types
+	
+	t.Run("FileReadResultMsg success", func(t *testing.T) {
+		// Create model
+		m := NewModel()
+		
+		// Send successful file read message
+		fileContent := "Sample resume content from file"
+		updatedModel, _ := m.Update(FileReadResultMsg{
+			Success: true,
+			Content: fileContent,
+			Error:   nil,
+		})
+		model := updatedModel.(Model)
+		
+		// Verify content was stored
+		if model.sourceContent != fileContent {
+			t.Errorf("Expected sourceContent to be %q, got %q", fileContent, model.sourceContent)
+		}
+	})
+	
+	t.Run("FileReadResultMsg failure", func(t *testing.T) {
+		// Create model
+		m := NewModel()
+		
+		// Send failed file read message
+		fileError := errors.New("file not found")
+		updatedModel, _ := m.Update(FileReadResultMsg{
+			Success: false,
+			Content: "",
+			Error:   fileError,
+		})
+		model := updatedModel.(Model)
+		
+		// Verify state transitions to error
+		if model.state != stateResultError {
+			t.Errorf("Expected state to transition to stateResultError, got %v", model.state)
+		}
+		
+		// Verify error message is set
+		if !strings.Contains(model.errorMsg, fileError.Error()) {
+			t.Errorf("Expected error message to contain %q, got %q", fileError.Error(), model.errorMsg)
+		}
+	})
+	
+	t.Run("APIInitResultMsg failure", func(t *testing.T) {
+		// Create model
+		m := NewModel()
+		
+		// Send failed API init message
+		apiError := errors.New("invalid API key")
+		updatedModel, _ := m.Update(APIInitResultMsg{
+			Success: false,
+			Error:   apiError,
+		})
+		model := updatedModel.(Model)
+		
+		// Verify state transitions to error
+		if model.state != stateResultError {
+			t.Errorf("Expected state to transition to stateResultError, got %v", model.state)
+		}
+		
+		// Verify error message is set
+		if !strings.Contains(model.errorMsg, apiError.Error()) {
+			t.Errorf("Expected error message to contain %q, got %q", apiError.Error(), model.errorMsg)
+		}
+	})
+	
+	t.Run("APIResultMsg success", func(t *testing.T) {
+		// Create model
+		m := NewModel()
+		
+		// Send successful API result message
+		outputPath := "/tmp/resume_output.md"
+		content := "Generated resume content"
+		updatedModel, _ := m.Update(APIResultMsg{
+			Success:    true,
+			Content:    content,
+			OutputPath: outputPath,
+			Error:      nil,
+		})
+		model := updatedModel.(Model)
+		
+		// Verify state transitions to success
+		if model.state != stateResultSuccess {
+			t.Errorf("Expected state to transition to stateResultSuccess, got %v", model.state)
+		}
+		
+		// Verify output path is set
+		if model.outputPath != outputPath {
+			t.Errorf("Expected outputPath to be %q, got %q", outputPath, model.outputPath)
+		}
+		
+		// Verify result message is set with content length
+		expectedLength := fmt.Sprintf("%d", len(content))
+		if model.resultMessage != expectedLength {
+			t.Errorf("Expected resultMessage to be %q, got %q", expectedLength, model.resultMessage)
+		}
+	})
+	
+	t.Run("APIResultMsg failure", func(t *testing.T) {
+		// Create model
+		m := NewModel()
+		
+		// Send failed API result message
+		apiError := errors.New("API request failed")
+		updatedModel, _ := m.Update(APIResultMsg{
+			Success: false,
+			Content: "",
+			Error:   apiError,
+		})
+		model := updatedModel.(Model)
+		
+		// Verify state transitions to error
+		if model.state != stateResultError {
+			t.Errorf("Expected state to transition to stateResultError, got %v", model.state)
+		}
+		
+		// Verify error message is set
+		if !strings.Contains(model.errorMsg, apiError.Error()) {
+			t.Errorf("Expected error message to contain %q, got %q", apiError.Error(), model.errorMsg)
+		}
+	})
+	
+	t.Run("StdinSubmitMsg", func(t *testing.T) {
+		// Create model
+		m := NewModel()
+		
+		// Send stdin submit message
+		stdinContent := "User-entered resume details"
+		updatedModel, _ := m.Update(StdinSubmitMsg{
+			Content: stdinContent,
+		})
+		model := updatedModel.(Model)
+		
+		// Verify state transitions to confirm generate
+		if model.state != stateConfirmGenerate {
+			t.Errorf("Expected state to transition to stateConfirmGenerate, got %v", model.state)
+		}
+		
+		// Verify content was stored
+		if model.stdinContent != stdinContent {
+			t.Errorf("Expected stdinContent to be %q, got %q", stdinContent, model.stdinContent)
+		}
+	})
+	
+	t.Run("ProgressUpdateMsg", func(t *testing.T) {
+		// Create model
+		m := NewModel()
+		
+		// Send progress update message
+		step := "Processing"
+		message := "Analyzing input data..."
+		updatedModel, _ := m.Update(ProgressUpdateMsg{
+			Step:    step,
+			Message: message,
+		})
+		model := updatedModel.(Model)
+		
+		// Verify progress information is stored
+		if model.progressStep != step {
+			t.Errorf("Expected progressStep to be %q, got %q", step, model.progressStep)
+		}
+		
+		if model.progressMsg != message {
+			t.Errorf("Expected progressMsg to be %q, got %q", message, model.progressMsg)
+		}
+	})
+	
+	t.Run("WindowSizeMsg", func(t *testing.T) {
+		// Create model
+		m := NewModel()
+		
+		// Send window size message with values different from default
+		width := 100
+		height := 50
+		updatedModel, _ := m.Update(tea.WindowSizeMsg{
+			Width:  width,
+			Height: height,
+		})
+		model := updatedModel.(Model)
+		
+		// Verify dimensions are stored
+		if model.width != width {
+			t.Errorf("Expected width to be %d, got %d", width, model.width)
+		}
+		
+		if model.height != height {
+			t.Errorf("Expected height to be %d, got %d", height, model.height)
+		}
+		
+		// Verify input component dimensions are updated
+		// For simplicity, just check they're set to reasonable values
+		if model.sourcePathInput.Width <= 0 {
+			t.Error("Expected sourcePathInput width to be positive")
+		}
+		
+		if model.stdinInput.Width() <= 0 {
+			t.Error("Expected stdinInput width to be positive")
+		}
+		
+		if model.stdinInput.Height() <= 0 {
+			t.Error("Expected stdinInput height to be positive")
+		}
+	})
 }
 
 func TestModelAPIKeyCheck(t *testing.T) {
 	// Test API key checking functionality
 	
-	// Test: Model should detect when API key is present or missing
+	// This test would need to set up environment variables or mock the API key check
+	// Skip for now since it depends on external state
+	t.Skip("Skipping API key check test as it depends on environment variables")
 }
 
 func TestModelFieldInitialization(t *testing.T) {
@@ -80,14 +397,131 @@ func TestModelFieldInitialization(t *testing.T) {
 
 func TestModelView(t *testing.T) {
 	// Test that View returns different content based on state
-	m := NewModel()
 	
-	// Test welcome state view
-	welcomeView := m.View()
-	if welcomeView == "" {
-		t.Errorf("Expected welcome view to have content")
-	}
+	t.Run("Welcome State View", func(t *testing.T) {
+		m := NewModel()
+		m.state = stateWelcome
+		m.apiKeyOk = true
+		
+		view := m.View()
+		if !strings.Contains(view, "Welcome to Resumake") {
+			t.Error("Expected welcome view to contain welcome message")
+		}
+		
+		if !strings.Contains(view, "API key is valid") {
+			t.Error("Expected welcome view to indicate valid API key")
+		}
+	})
 	
-	// Set to different states and test view changes
-	// This will be expanded once the actual view code is implemented
+	t.Run("Source Input State View", func(t *testing.T) {
+		m := NewModel()
+		m.state = stateInputSourcePath
+		
+		view := m.View()
+		if !strings.Contains(view, "Source File Input") {
+			t.Error("Expected source input view to contain title")
+		}
+		
+		if !strings.Contains(view, m.sourcePathInput.View()) {
+			t.Error("Expected source input view to contain the text input component")
+		}
+	})
+	
+	t.Run("Stdin Input State View", func(t *testing.T) {
+		m := NewModel()
+		m.state = stateInputStdin
+		
+		view := m.View()
+		if !strings.Contains(view, "Resume Details") {
+			t.Error("Expected stdin input view to contain title")
+		}
+		
+		if !strings.Contains(view, m.stdinInput.View()) {
+			t.Error("Expected stdin input view to contain the textarea component")
+		}
+	})
+	
+	t.Run("Confirm Generate State View", func(t *testing.T) {
+		m := NewModel()
+		m.state = stateConfirmGenerate
+		m.sourcePathInput.SetValue("/path/to/source.md")
+		m.sourceContent = "Sample source content"
+		m.stdinContent = "Sample stdin content"
+		
+		view := m.View()
+		if !strings.Contains(view, "Ready to generate") {
+			t.Error("Expected confirm generate view to contain ready message")
+		}
+		
+		if !strings.Contains(view, m.sourcePathInput.Value()) {
+			t.Error("Expected confirm generate view to show source file path")
+		}
+		
+		if !strings.Contains(view, "Enter to confirm") {
+			t.Error("Expected confirm generate view to include confirmation instruction")
+		}
+	})
+	
+	t.Run("Generating State View", func(t *testing.T) {
+		m := NewModel()
+		m.state = stateGenerating
+		m.progressStep = "Processing"
+		m.progressMsg = "Analyzing input..."
+		
+		view := m.View()
+		if !strings.Contains(view, "Generating") {
+			t.Error("Expected generating view to contain title")
+		}
+		
+		if !strings.Contains(view, m.spinner.View()) {
+			t.Error("Expected generating view to show spinner")
+		}
+		
+		if !strings.Contains(view, m.progressStep) {
+			t.Error("Expected generating view to show progress step")
+		}
+		
+		if !strings.Contains(view, m.progressMsg) {
+			t.Error("Expected generating view to show progress message")
+		}
+	})
+	
+	t.Run("Success State View", func(t *testing.T) {
+		m := NewModel()
+		m.state = stateResultSuccess
+		m.outputPath = "/tmp/resume_output.md"
+		m.resultMessage = "1500"
+		
+		view := m.View()
+		if !strings.Contains(view, "Success") {
+			t.Error("Expected success view to contain success message")
+		}
+		
+		if !strings.Contains(view, m.outputPath) {
+			t.Error("Expected success view to show output path")
+		}
+		
+		if !strings.Contains(view, m.resultMessage) {
+			t.Error("Expected success view to show result message")
+		}
+	})
+	
+	t.Run("Error State View", func(t *testing.T) {
+		m := NewModel()
+		m.state = stateResultError
+		m.errorMsg = "API connection failed"
+		
+		view := m.View()
+		if !strings.Contains(view, "ERROR") {
+			t.Error("Expected error view to contain error indicator")
+		}
+		
+		if !strings.Contains(view, m.errorMsg) {
+			t.Error("Expected error view to show error message")
+		}
+		
+		if !strings.Contains(view, "Troubleshooting") {
+			t.Error("Expected error view to include troubleshooting section")
+		}
+	})
 }
