@@ -303,9 +303,7 @@ func (m Model) View() string {
 		content = renderSuccessView(m)
 	
 	case stateResultError:
-		content = "Error generating resume:\n\n"
-		content += m.errorMsg + "\n\n"
-		content += "Press Enter to quit."
+		content = renderErrorView(m)
 	
 	default:
 		content = "Unknown state"

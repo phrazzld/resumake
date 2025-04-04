@@ -306,3 +306,57 @@ func TestRenderSuccessView(t *testing.T) {
 		t.Error("Success view should mention formatting options")
 	}
 }
+
+func TestRenderErrorView(t *testing.T) {
+	// Create model with error information
+	model := Model{
+		errorMsg: "Failed to connect to API: timeout after 30 seconds",
+	}
+	
+	// Get the rendered view
+	errorView := renderErrorView(model)
+	
+	// The error view should:
+	// 1. Contain a title or heading about the error
+	if !strings.Contains(errorView, "ERROR") {
+		t.Error("Error view should contain a title about the error")
+	}
+	
+	// 2. Display the specific error message
+	if !strings.Contains(errorView, "Failed to connect to API: timeout after 30 seconds") {
+		t.Error("Error view should display the specific error message")
+	}
+	
+	// 3. Include possible troubleshooting steps or suggestions
+	if !strings.Contains(errorView, "Troubleshooting") || !strings.Contains(errorView, "try") {
+		t.Error("Error view should include troubleshooting steps or suggestions")
+	}
+	
+	// 4. Include API key information if the error might be related to it
+	if !strings.Contains(errorView, "API") {
+		t.Error("Error view should include API key information for API-related errors")
+	}
+	
+	// 5. Include keyboard shortcuts
+	if !strings.Contains(errorView, "Enter") {
+		t.Error("Error view should include Enter shortcut to quit")
+	}
+	
+	// Create model with different type of error
+	fileErrorModel := Model{
+		errorMsg: "Failed to read source file: no such file or directory",
+	}
+	
+	// Get the rendered view for file error
+	fileErrorView := renderErrorView(fileErrorModel)
+	
+	// 6. Display appropriate context-specific help for different error types
+	if !strings.Contains(fileErrorView, "file") {
+		t.Error("Error view should display context-specific help for different error types")
+	}
+	
+	// 7. Have a visual indicator or styling for errors
+	if !strings.Contains(errorView, "❌") && !strings.Contains(errorView, "⚠") {
+		t.Error("Error view should include a visual indicator for errors")
+	}
+}

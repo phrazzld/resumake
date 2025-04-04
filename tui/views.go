@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 	
 	"github.com/charmbracelet/lipgloss"
 )
@@ -61,6 +62,20 @@ var (
 		Foreground(lipgloss.Color("#FFFFFF")).
 		Background(lipgloss.Color("#555555")).
 		Padding(0, 1)
+		
+	errorTitleStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FFFFFF")).
+		Background(lipgloss.Color("#FF0000")).
+		Padding(0, 1).
+		MarginBottom(1)
+		
+	errorMsgStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FF5555")).
+		Bold(true)
+		
+	troubleshootStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#AACCFF"))
 )
 
 // renderWelcomeView generates the welcome screen content
@@ -306,6 +321,76 @@ func renderSuccessView(m Model) string {
 	
 	// Congratulatory message
 	content += infoStyle.Render("Congratulations on creating your professional resume!")
+	content += "\n\n"
+	
+	// Keyboard shortcuts
+	content += keyboardHintStyle.Render("Press Enter to quit")
+	
+	return content
+}
+
+// renderErrorView generates the view shown when an error occurs
+func renderErrorView(m Model) string {
+	var content string
+	
+	// Title with error indicator
+	content += errorTitleStyle.Render("❌ ERROR: Resume Generation Failed ❌")
+	content += "\n\n"
+	
+	// Error message
+	content += "The following error occurred while generating your resume:"
+	content += "\n\n"
+	content += errorMsgStyle.Render(m.errorMsg)
+	content += "\n\n"
+	
+	// Troubleshooting section
+	content += titleStyle.Render("Troubleshooting")
+	content += "\n\n"
+	
+	// Different troubleshooting suggestions based on error type
+	if strings.Contains(strings.ToLower(m.errorMsg), "api") {
+		content += troubleshootStyle.Render("API-related issues:")
+		content += "\n"
+		content += "• Check your internet connection"
+		content += "\n"
+		content += "• Verify your GEMINI_API_KEY environment variable is set correctly"
+		content += "\n"
+		content += "• Try again later as the API service might be temporarily unavailable"
+		content += "\n"
+		content += "• Check the API usage quota in your Google Cloud Console"
+	} else if strings.Contains(strings.ToLower(m.errorMsg), "file") {
+		content += troubleshootStyle.Render("File-related issues:")
+		content += "\n"
+		content += "• Check if the file exists at the specified path"
+		content += "\n"
+		content += "• Verify you have read permissions for the file"
+		content += "\n"
+		content += "• Try using an absolute path instead of a relative path"
+	} else {
+		content += troubleshootStyle.Render("General troubleshooting:")
+		content += "\n"
+		content += "• Try running the application again"
+		content += "\n"
+		content += "• Check the application logs for more details"
+		content += "\n"
+		content += "• Verify you have sufficient disk space and memory"
+	}
+	
+	// What to try next
+	content += "\n\n"
+	content += infoStyle.Render("What to try next:")
+	content += "\n"
+	content += "1. Address the issue mentioned above"
+	content += "\n"
+	content += "2. Run the application again"
+	content += "\n"
+	content += "3. If the problem persists, try with simplified input"
+	content += "\n\n"
+	
+	// Additional help
+	content += "If you continue to experience issues, check the project documentation"
+	content += "\n"
+	content += "or report this problem in the GitHub repository."
 	content += "\n\n"
 	
 	// Keyboard shortcuts
