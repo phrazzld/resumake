@@ -77,7 +77,7 @@
   - Priority: Medium
 
 ## Output Generation
-- [ ] Create file writing functionality
+- [x] Create file writing functionality
   - Description: Write generated markdown to resume_out.md
   - Dependencies: Response handling
   - Priority: High

@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestParseFlagsSource(t *testing.T) {
+func TestParseFlags(t *testing.T) {
 	// Test case 1: No flags provided
 	t.Run("No source flag provided", func(t *testing.T) {
 		// Parse flags with no arguments
@@ -71,6 +71,26 @@ func TestParseFlagsSource(t *testing.T) {
 		// Verify an error occurred
 		if err == nil {
 			t.Error("Expected error for invalid flag, got nil")
+		}
+	})
+	
+	// Test case 5: Output flag provided
+	t.Run("Output flag provided", func(t *testing.T) {
+		// Setup test with output flag
+		expectedPath := "/path/to/output.md"
+		args := []string{"-output", expectedPath}
+		
+		// Parse flags
+		flags, err := ParseFlagsWithArgs(args)
+		
+		// Verify no error occurred
+		if err != nil {
+			t.Errorf("Expected no error, got %v", err)
+		}
+		
+		// Verify output matches expected value
+		if flags.OutputPath != expectedPath {
+			t.Errorf("Expected output path %q, got %q", expectedPath, flags.OutputPath)
 		}
 	})
 }

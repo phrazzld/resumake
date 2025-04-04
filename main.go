@@ -89,6 +89,15 @@ func main() {
 	// Display API response information
 	fmt.Println("Successfully received and processed API response")
 	fmt.Println("Validated and cleaned Markdown content")
-	// For now, just print the length of the generated text until we implement file writing
-	fmt.Printf("Generated resume with %d characters\n", len(markdownContent))
+	
+	// Write the generated markdown to a file
+	fmt.Println("Writing generated resume to file...")
+	outputPath, err := output.WriteOutput(markdownContent, flags.OutputPath)
+	if err != nil {
+		log.Fatalf("Error writing output file: %v", err)
+	}
+	
+	// Display success message
+	fmt.Printf("Successfully generated resume with %d characters\n", len(markdownContent))
+	fmt.Printf("Resume saved to: %s\n", outputPath)
 }
