@@ -74,6 +74,11 @@ func TestInitializeClient(t *testing.T) {
 		if model == nil {
 			t.Error("Expected model to be initialized, got nil")
 		}
+		
+		// Check if system instructions are set
+		if model.SystemInstruction == nil {
+			t.Error("Expected system instructions to be set, but they were nil")
+		}
 	})
 
 	// Test case 2: Fail to initialize client with invalid API key
@@ -112,6 +117,11 @@ func TestInitializeClient(t *testing.T) {
 		
 		if model == nil {
 			t.Error("Expected model to be initialized, got nil")
+		}
+		
+		// Check if system instructions are set
+		if model.SystemInstruction == nil {
+			t.Error("Expected system instructions to be set, but they were nil")
 		}
 	})
 }

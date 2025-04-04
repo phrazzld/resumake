@@ -12,6 +12,11 @@ import (
 // Default model to use for Gemini API
 const DefaultModelName = "gemini-2.5-pro-exp-03-25"
 
+// SystemInstructions defines the system instructions for the resume generation model
+const SystemInstructions = `You are an expert resume writing assistant. Your goal is to synthesize the provided existing resume information (if any) and the raw stream-of-consciousness input into a single, coherent, professional resume formatted strictly in Markdown.
+
+Prioritize clarity, conciseness, and professional language. Structure the output logically with clear headings (e.g., Summary, Experience, Projects, Skills, Education). Infer structure and dates where possible, but do not fabricate information not present in the inputs. Focus on elevating the user's actual experience. Ensure the final output is only Markdown content.`
+
 // GetAPIKey retrieves the Gemini API key from environment variables.
 // Returns an error if the API key is not set.
 func GetAPIKey() (string, error) {
@@ -52,5 +57,13 @@ func InitializeClientWithModel(ctx context.Context, apiKey string, modelName str
 		return nil, nil, errors.New("failed to initialize model: " + modelName)
 	}
 
+	// Configure model with system instructions
+	model.SystemInstruction = &genai.Content{
+		Parts: []genai.Part{
+			genai.Text(SystemInstructions),
+		},
+	}
+
 	return client, model, nil
 }
+

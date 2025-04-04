@@ -25,8 +25,9 @@ func main() {
 	}
 	defer client.Close()
 	
-	// This is just a placeholder and will be replaced with actual implementation
+	// Display initialization success message
 	fmt.Printf("Successfully initialized Gemini client with model: %s\n", api.DefaultModelName)
+	fmt.Println("Model configured with system instructions for resume generation")
 	
 	// Use model in the future for API calls
 	_ = model // Prevent unused variable warning
