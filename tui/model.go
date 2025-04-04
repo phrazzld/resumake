@@ -258,7 +258,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// Add progress update and API commands
 				cmds = append(cmds, 
 					SendProgressUpdateCmd("Starting", "Initializing resume generation..."),
-					GenerateResumeCmd(m.sourceContent, m.stdinContent, outputPath, false),
+					GenerateResumeCmd(m.apiClient, m.apiModel, m.sourceContent, m.stdinContent, outputPath, false),
 				)
 			} else if msg.Type == tea.KeyEsc {
 				m.state = stateInputStdin

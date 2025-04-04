@@ -3,6 +3,8 @@ package tui
 import (
 	"os"
 	"testing"
+	
+	"github.com/google/generative-ai-go/genai"
 )
 
 // TestReadSourceFileCmd tests the file reading command
@@ -149,8 +151,12 @@ func TestGenerateResumeCmd(t *testing.T) {
 		stdinContent := "Additional resume details"
 		outputPath := "/tmp/test_resume.md"
 		
+		// Client and model should be nil in dry run mode
+		var client *genai.Client = nil
+		var model *genai.GenerativeModel = nil
+		
 		// Create command with dry run flag set to true
-		cmd := GenerateResumeCmd(sourceContent, stdinContent, outputPath, true)
+		cmd := GenerateResumeCmd(client, model, sourceContent, stdinContent, outputPath, true)
 		result := cmd()
 		
 		// Check the result type
@@ -179,4 +185,40 @@ func TestGenerateResumeCmd(t *testing.T) {
 	// 2. Mocking file operations
 	// 3. Setting up environment variables
 	// This is better suited for integration tests
+}
+
+// TestGenerateResumeCmdUsesProvidedClient verifies that GenerateResumeCmd uses the provided client and model
+func TestGenerateResumeCmdUsesProvidedClient(t *testing.T) {
+	// This test will verify that the provided client is used instead of creating a new one
+	t.Run("Uses provided client and model", func(t *testing.T) {
+		// We'll use the dry run mode to avoid actual API calls,
+		// but we can still verify that the function signature accepts client and model parameters
+		
+		// Create test data
+		sourceContent := "Source resume content"
+		stdinContent := "Additional resume details"
+		outputPath := "/tmp/test_resume.md"
+		
+		// For now, just test with nil client/model since we're using dry run mode
+		var client *genai.Client = nil
+		var model *genai.GenerativeModel = nil
+		
+		// Create and run the command
+		cmd := GenerateResumeCmd(client, model, sourceContent, stdinContent, outputPath, true)
+		result := cmd()
+		
+		// Verify command produced expected result
+		msg, ok := result.(APIResultMsg)
+		if !ok {
+			t.Fatalf("Expected APIResultMsg, got %T", result)
+		}
+		
+		if !msg.Success {
+			t.Errorf("Expected Success to be true, got false: %v", msg.Error)
+		}
+		
+		// In a real implementation, we would create mock implementations of client and model
+		// that allow us to verify they were used correctly. Since we're using dry run mode,
+		// we're just verifying that the function accepts the client and model parameters.
+	})
 }

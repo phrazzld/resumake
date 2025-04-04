@@ -11,7 +11,7 @@
   - Dependencies: Added API client fields to Model
   - Priority: High
 
-- [ ] Restructure GenerateResumeCmd to use passed clients
+- [x] Restructure GenerateResumeCmd to use passed clients
   - Description: Modify GenerateResumeCmd to accept client and model instances as parameters instead of initializing them
   - Dependencies: Added API client fields and modified Update method
   - Priority: High

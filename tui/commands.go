@@ -74,7 +74,7 @@ func InitializeAPICmd() tea.Cmd {
 
 // GenerateResumeCmd returns a command that generates a resume using the API
 // and returns an APIResultMsg with the result.
-func GenerateResumeCmd(sourceContent, stdinContent, outputFlagPath string, dryRun bool) tea.Cmd {
+func GenerateResumeCmd(client *genai.Client, model *genai.GenerativeModel, sourceContent, stdinContent, outputFlagPath string, dryRun bool) tea.Cmd {
 	return func() tea.Msg {
 		// Skip actual API call if this is a dry run (for testing)
 		if dryRun {
@@ -86,26 +86,20 @@ func GenerateResumeCmd(sourceContent, stdinContent, outputFlagPath string, dryRu
 			}
 		}
 
-		// Get API key
-		apiKey, err := api.GetAPIKey()
-		if err != nil {
+		// Verify client and model are provided
+		if client == nil || model == nil {
 			return APIResultMsg{
 				Success: false,
-				Error:   fmt.Errorf("API key error: %w", err),
+				Error:   fmt.Errorf("API client or model is nil"),
 			}
 		}
+		
+		// We don't need to close the client here since it's managed by the caller
+		// The client lifecycle is now handled by the Model struct
 
-		// Initialize client and model
+		// Create context for the API request
 		ctx := context.Background()
-		client, model, err := api.InitializeClient(ctx, apiKey)
-		if err != nil {
-			return APIResultMsg{
-				Success: false,
-				Error:   fmt.Errorf("failed to initialize API client: %w", err),
-			}
-		}
-		defer client.Close()
-
+		
 		// Build the prompt from source content and stdin input
 		promptContent := prompt.GeneratePromptContent(sourceContent, stdinContent)
 
