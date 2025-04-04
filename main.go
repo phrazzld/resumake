@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -37,8 +38,15 @@ func main() {
 		log.Fatalf("Error parsing flags: %v", err)
 	}
 	
+	// Create a cancellable context
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Ensure context is cancelled when main exits
+	
 	// Initialize the Bubble Tea model with flags for pre-filling inputs
 	model := tui.NewModel()
+	
+	// Apply the context to the model
+	model = model.WithContext(ctx)
 	
 	// If a source path was provided via flags, pre-fill it in the model
 	if flags.SourcePath != "" {
@@ -50,8 +58,8 @@ func main() {
 		model = model.WithOutputPath(flags.OutputPath)
 	}
 	
-	// Set up signal handling for graceful shutdown
-	p := setupProgramWithSignalHandling(model)
+	// Set up signal handling for graceful shutdown, passing the cancel function
+	p := setupProgramWithSignalHandling(model, cancel)
 	
 	// Run the program
 	if _, err := p.Run(); err != nil {
@@ -64,7 +72,8 @@ func main() {
 
 // setupProgramWithSignalHandling creates a new Bubble Tea program with the given model
 // and sets up signal handling for graceful shutdown.
-func setupProgramWithSignalHandling(model tea.Model) *tea.Program {
+// It accepts a context.CancelFunc that will be called when a termination signal is received.
+func setupProgramWithSignalHandling(model tea.Model, cancel context.CancelFunc) *tea.Program {
 	// Create a new Bubble Tea program with our model
 	p := tea.NewProgram(model, tea.WithAltScreen())
 	
@@ -81,7 +90,11 @@ func setupProgramWithSignalHandling(model tea.Model) *tea.Program {
 		// Log the signal that was received
 		log.Printf("Received signal: %v", sig)
 		
-		// Clean up by sending a QuitMsg to the program
+		// Cancel the context first to stop any ongoing operations
+		// This ensures API calls can be properly cancelled
+		cancel()
+		
+		// Then send a QuitMsg to the program to exit gracefully
 		// This ensures the cleanupAPIClient function is called
 		// before exiting
 		p.Send(tea.QuitMsg{})
