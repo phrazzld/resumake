@@ -17,7 +17,7 @@
   - Dependencies: None
   - Priority: High
 
-- [ ] Set up error handling utilities
+- [x] Set up error handling utilities
   - Description: Create consistent error handling approach using log.Fatal for v0.1
   - Dependencies: None
   - Priority: Medium
@@ -87,14 +87,8 @@
   - Dependencies: File writing
   - Priority: Medium
 
-## Testing
-- [ ] Manual testing
-  - Description: Test end-to-end workflow with sample inputs
-  - Dependencies: All implementation tasks
-  - Priority: High
-
 ## Documentation
-- [ ] Add code documentation
+- [x] Add code documentation
   - Description: Add comments for public functions and types
   - Dependencies: Implementation
   - Priority: Medium
