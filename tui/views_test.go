@@ -257,3 +257,52 @@ func TestRenderGeneratingView(t *testing.T) {
 		t.Error("Generating view should include information about estimated completion time")
 	}
 }
+
+func TestRenderSuccessView(t *testing.T) {
+	// Create model with success information
+	model := Model{
+		outputPath:    "/tmp/resume_out.md",
+		resultMessage: "2500",
+		stdinContent:  "Sample content for resume",
+		sourceContent: "Sample source content",
+	}
+	
+	// Get the rendered view
+	successView := renderSuccessView(model)
+	
+	// The success view should:
+	// 1. Contain a title or heading about successful completion
+	if !strings.Contains(successView, "Success") || !strings.Contains(successView, "Complete") {
+		t.Error("Success view should contain a title about successful completion")
+	}
+	
+	// 2. Show the output file path
+	if !strings.Contains(successView, "/tmp/resume_out.md") {
+		t.Error("Success view should show the output file path")
+	}
+	
+	// 3. Show the content length or size
+	if !strings.Contains(successView, "2500") {
+		t.Error("Success view should show the content length")
+	}
+	
+	// 4. Include next steps or instructions
+	if !strings.Contains(successView, "Next Steps") {
+		t.Error("Success view should include next steps instructions")
+	}
+	
+	// 5. Include keyboard shortcuts
+	if !strings.Contains(successView, "Enter") {
+		t.Error("Success view should include Enter shortcut to quit")
+	}
+	
+	// 6. Include a celebratory message or visual element
+	if !strings.Contains(successView, "✅") && !strings.Contains(successView, "✓") && !strings.Contains(successView, "congratulations") {
+		t.Error("Success view should include a celebratory element")
+	}
+	
+	// 7. Show formatting options
+	if !strings.Contains(successView, "PDF") || !strings.Contains(successView, "DOCX") {
+		t.Error("Success view should mention formatting options")
+	}
+}

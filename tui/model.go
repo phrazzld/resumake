@@ -300,15 +300,7 @@ func (m Model) View() string {
 		content = renderGeneratingView(m)
 	
 	case stateResultSuccess:
-		content = "----- RESUME GENERATION COMPLETE -----\n"
-		content += "Output file:      " + m.outputPath + "\n"
-		content += "Content length:   " + m.resultMessage + " characters\n\n"
-		content += "Next steps:\n"
-		content += "  * Review your resume at " + m.outputPath + "\n"
-		content += "  * Make any necessary edits\n"
-		content += "  * Convert to other formats (PDF, DOCX)\n"
-		content += "---------------------------------------\n\n"
-		content += "Press Enter to quit."
+		content = renderSuccessView(m)
 	
 	case stateResultError:
 		content = "Error generating resume:\n\n"

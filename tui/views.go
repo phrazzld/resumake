@@ -51,6 +51,16 @@ var (
 	stepStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#44AAFF")).
 		Bold(true)
+		
+	completedStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#33FF33"))
+		
+	pathStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FFFFFF")).
+		Background(lipgloss.Color("#555555")).
+		Padding(0, 1)
 )
 
 // renderWelcomeView generates the welcome screen content
@@ -252,6 +262,54 @@ func renderGeneratingView(m Model) string {
 	content += "The Gemini API is analyzing your experience and crafting a professional resume."
 	content += "\n"
 	content += "You'll be able to review and save the result when it's complete."
+	
+	return content
+}
+
+// renderSuccessView generates the view shown after successful resume generation
+func renderSuccessView(m Model) string {
+	var content string
+	
+	// Title with success indicator
+	content += completedStyle.Render("✅ Success! Resume Generation Complete! ✅")
+	content += "\n\n"
+	
+	// Border for output path
+	content += "Your resume has been successfully generated and saved to:"
+	content += "\n"
+	content += pathStyle.Render(m.outputPath)
+	content += "\n\n"
+	
+	// Show result information
+	content += fmt.Sprintf("Content length: %s characters", m.resultMessage)
+	content += "\n\n"
+	
+	// Next steps with a box
+	content += titleStyle.Render("╔═════════════════════════╗")
+	content += "\n"
+	content += titleStyle.Render("║ Next Steps              ║")
+	content += "\n"
+	content += titleStyle.Render("╚═════════════════════════╝")
+	content += "\n\n"
+	
+	// Detailed next steps list
+	content += successStyle.Render("1. Review your resume at ") + m.outputPath
+	content += "\n"
+	content += successStyle.Render("2. Make any necessary edits or refinements")
+	content += "\n"
+	content += successStyle.Render("3. Convert to other formats:")
+	content += "\n"
+	content += "   • PDF: Use a markdown converter like pandoc"
+	content += "\n"
+	content += "   • DOCX: Use a markdown converter or import into your word processor"
+	content += "\n\n"
+	
+	// Congratulatory message
+	content += infoStyle.Render("Congratulations on creating your professional resume!")
+	content += "\n\n"
+	
+	// Keyboard shortcuts
+	content += keyboardHintStyle.Render("Press Enter to quit")
 	
 	return content
 }
