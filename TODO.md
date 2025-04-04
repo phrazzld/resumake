@@ -5,7 +5,7 @@
   - Dependencies: None
   - Priority: High
 - [x] Improve welcome view
-  - Description: Enhance layout, API key status display, instructions
+  - Description: Enhance layout, API key status display, instructions, fixed for light/dark themes
   - Dependencies: Consistent styles
   - Priority: High
 - [ ] Enhance generating view with spinner improvements

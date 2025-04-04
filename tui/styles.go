@@ -6,36 +6,46 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Define a consistent color palette with semantic meaning
+// Define a consistent color palette with high contrast for both light and dark themes
 var (
-	// Primary brand colors
-	primaryColor   = lipgloss.Color("#2C8CFF") // Vibrant blue - main brand color
-	secondaryColor = lipgloss.Color("#15B097") // Teal - secondary brand color
-	accentColor    = lipgloss.Color("#F2C94C") // Gold - attention-grabbing accent
+	// Primary brand colors with high contrast
+	primaryColor   = lipgloss.AdaptiveColor{Light: "#0550AE", Dark: "#4C8FFF"} // Blue with good contrast in both modes
+	secondaryColor = lipgloss.AdaptiveColor{Light: "#0B6E63", Dark: "#25D1B7"} // Teal with good contrast in both modes
+	accentColor    = lipgloss.AdaptiveColor{Light: "#B07C00", Dark: "#FFCC3E"} // Gold with good contrast in both modes
 	
-	// Semantic colors
-	successColor   = lipgloss.Color("#27AE60") // Green - success states
-	errorColor     = lipgloss.Color("#EB5757") // Red - error states
-	warningColor   = lipgloss.Color("#F2994A") // Orange - warning states
+	// Semantic colors with high contrast
+	successColor   = lipgloss.AdaptiveColor{Light: "#1E6B38", Dark: "#4AE583"} // Green with good contrast in both modes
+	errorColor     = lipgloss.AdaptiveColor{Light: "#AE1F3D", Dark: "#FF6B80"} // Red with good contrast in both modes
+	warningColor   = lipgloss.AdaptiveColor{Light: "#AD5700", Dark: "#FFAD42"} // Orange with good contrast in both modes
 	
-	// Neutral colors
-	subtleColor    = lipgloss.Color("#BDBDBD") // Light gray - subtle text, hints
-	neutralColor   = lipgloss.Color("#F2F2F2") // Off-white - neutral backgrounds
-	darkColor      = lipgloss.Color("#333333") // Dark gray - text on light backgrounds
-	bgColor        = lipgloss.Color("#121212") // Near black - dark backgrounds
+	// Neutral colors for text and backgrounds
+	subtleColor    = lipgloss.AdaptiveColor{Light: "#777777", Dark: "#AAAAAA"} // Gray for subtle elements
+	textColor      = lipgloss.AdaptiveColor{Light: "#222222", Dark: "#E8E8E8"} // Main text color
+	bgAccentColor  = lipgloss.AdaptiveColor{Light: "#E8E8E8", Dark: "#333333"} // Slight contrast from background
+	highlightColor = lipgloss.AdaptiveColor{Light: "#000000", Dark: "#FFFFFF"} // Maximum contrast
 )
 
 // Base styles to be composed into more complex styles
 var (
 	// Base text styles
 	baseStyle = lipgloss.NewStyle().
-		Foreground(neutralColor)
+		Foreground(textColor)
 	
 	boldStyle = baseStyle.Copy().
 		Bold(true)
 	
 	italicStyle = baseStyle.Copy().
 		Italic(true)
+	
+	// High contrast style for important elements
+	highlightStyle = boldStyle.Copy().
+		Foreground(highlightColor)
+		
+	// Text on contrasting background for maximum readability
+	contrastBoxStyle = boldStyle.Copy().
+		Foreground(highlightColor).
+		Background(primaryColor).
+		Padding(0, 2)
 )
 
 // UI element styles
@@ -98,15 +108,15 @@ var (
 	completedStyle = boldStyle.Copy().
 		Foreground(successColor)
 	
-	// Output path style
+	// Output path style - high contrast for important paths
 	pathStyle = boldStyle.Copy().
-		Foreground(neutralColor).
-		Background(darkColor).
+		Foreground(textColor).
+		Background(bgAccentColor).
 		Padding(0, 1)
 	
 	// Error styles
 	errorTitleStyle = boldStyle.Copy().
-		Foreground(neutralColor).
+		Foreground(highlightColor).
 		Background(errorColor).
 		Padding(0, 1).
 		MarginBottom(1)
@@ -124,31 +134,36 @@ var (
 	primaryBoxStyle = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(primaryColor).
-		Padding(1, 2)
+		Padding(1, 2).
+		BorderBackground(bgAccentColor)
 	
 	// Secondary box - for secondary content
 	secondaryBoxStyle = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(secondaryColor).
-		Padding(1, 2)
+		Padding(1, 2).
+		BorderBackground(bgAccentColor)
 	
 	// Accent box - for important content that needs attention
 	accentBoxStyle = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(accentColor).
-		Padding(1, 2)
+		Padding(1, 2).
+		BorderBackground(bgAccentColor)
 	
 	// Error box - for error messages
 	errorBoxStyle = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(errorColor).
-		Padding(1, 2)
+		Padding(1, 2).
+		BorderBackground(bgAccentColor)
 	
 	// Success box - for success messages
 	successBoxStyle = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(successColor).
-		Padding(1, 2)
+		Padding(1, 2).
+		BorderBackground(bgAccentColor)
 )
 
 // Utility functions for styled content
@@ -177,23 +192,19 @@ func StyledSection(title string, content string, boxStyle lipgloss.Style) string
 
 // LogoText returns a stylized text-based logo for the application
 func LogoText() string {
-	color1 := lipgloss.NewStyle().Foreground(primaryColor).Bold(true)
-	color2 := lipgloss.NewStyle().Foreground(secondaryColor).Bold(true)
-	color3 := lipgloss.NewStyle().Foreground(accentColor).Bold(true)
+	// Create a high-contrast box for the logo to ensure visibility on any terminal
+	logoBox := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Background(primaryColor).
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(accentColor).
+		Padding(1, 4).
+		MarginBottom(1).
+		Align(lipgloss.Center).
+		Width(24)
 	
-	// Simple text version for testing or narrow terminals
-	if true {
-		return color1.Render("RESUMAKE")
-	}
-	
-	// Create a simple multi-line stylized logo
-	line1 := color1.Render("██████  ███████ ███████ ██    ██ ███    ███  █████  ██   ██ ███████ ")
-	line2 := color2.Render("██   ██ ██      ██      ██    ██ ████  ████ ██   ██ ██  ██  ██      ")
-	line3 := color3.Render("██████  █████   ███████ ██    ██ ██ ████ ██ ███████ █████   █████   ")
-	line4 := color2.Render("██   ██ ██           ██ ██    ██ ██  ██  ██ ██   ██ ██  ██  ██      ")
-	line5 := color1.Render("██   ██ ███████ ███████  ██████  ██      ██ ██   ██ ██   ██ ███████ ")
-	
-	return lipgloss.JoinVertical(lipgloss.Center, line1, line2, line3, line4, line5)
+	return logoBox.Render("R E S U M A K E")
 }
 
 // VersionInfo creates a version info tag for the welcome screen
