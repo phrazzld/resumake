@@ -7,171 +7,85 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Styles for different elements
-var (
-	// Define a consistent color palette with better contrast
-	primaryColor   = lipgloss.Color("#2C8CFF") // Vibrant blue
-	secondaryColor = lipgloss.Color("#15B097") // Teal
-	accentColor    = lipgloss.Color("#F2C94C") // Gold
-	successColor   = lipgloss.Color("#27AE60") // Green
-	errorColor     = lipgloss.Color("#EB5757") // Red
-	subtleColor    = lipgloss.Color("#BDBDBD") // Light gray
-	neutralColor   = lipgloss.Color("#F2F2F2") // Off-white
-	darkColor      = lipgloss.Color("#333333") // Dark gray
-	
-	// Title styles - make more prominent
-	titleStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(primaryColor).
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(primaryColor).
-		Padding(0, 1).
-		MarginBottom(1)
-	
-	// Subtitle with better contrast
-	subtitleStyle = lipgloss.NewStyle().
-		Italic(true).
-		Foreground(secondaryColor).
-		MarginBottom(1)
-	
-	// Status styles
-	successStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(successColor)
-	
-	errorStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(errorColor)
-	
-	infoStyle = lipgloss.NewStyle().
-		Foreground(accentColor).
-		Bold(true)
-	
-	// Keyboard hints with better visibility
-	keyboardHintStyle = lipgloss.NewStyle().
-		Foreground(subtleColor).
-		Italic(true)
-	
-	// Input styles
-	inputLabelStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(primaryColor)
-	
-	flagValueStyle = lipgloss.NewStyle().
-		Foreground(accentColor).
-		Bold(true)
-	
-	// Help text styles
-	tipStyle = lipgloss.NewStyle().
-		Foreground(secondaryColor).
-		Italic(true)
-	
-	exampleStyle = lipgloss.NewStyle().
-		Foreground(primaryColor)
-	
-	// Progress styles
-	progressStyle = lipgloss.NewStyle().
-		Foreground(accentColor).
-		Bold(true)
-	
-	stepStyle = lipgloss.NewStyle().
-		Foreground(primaryColor).
-		Bold(true)
-	
-	completedStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(successColor)
-	
-	// Output path style
-	pathStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(neutralColor).
-		Background(darkColor).
-		Padding(0, 1)
-	
-	// Error styles
-	errorTitleStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(neutralColor).
-		Background(errorColor).
-		Padding(0, 1).
-		MarginBottom(1)
-	
-	errorMsgStyle = lipgloss.NewStyle().
-		Foreground(errorColor).
-		Bold(true)
-	
-	troubleshootStyle = lipgloss.NewStyle().
-		Foreground(primaryColor)
-)
-
 // renderWelcomeView generates the welcome screen content
 func renderWelcomeView(m Model) string {
-	var content string
-	
-	// Title - using prettier borders with proper styling
-	welcomeTitle := titleStyle.
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(primaryColor).
-		Padding(1, 3).
-		Render("Welcome to Resumake!")
-	
-	content += welcomeTitle
-	content += "\n\n"
-	
 	// Use the shared wrapText utility for consistent text wrapping
 	wrap := func(text string, width int) string {
 		return wrapText(text, width)
 	}
 	
-	// Application description - now with text wrapping
-	descWidth := m.width
-	if descWidth > 80 {
-		descWidth = 80 // Cap at 80 chars for readability
+	// Calculate display width
+	displayWidth := m.width
+	if displayWidth > 80 {
+		displayWidth = 80 // Cap at 80 chars for readability
+	}
+	if displayWidth < 40 {
+		displayWidth = 40 // Minimum width
 	}
 	
+	// Title with border
+	welcomeTitle := StyledTitle("Welcome to Resumake!", true)
+	
+	// Application description
 	description := "This tool helps you create a professional resume from your experience and qualifications."
-	content += subtitleStyle.Render(wrap(description, descWidth-5)) // -5 for margin
-	content += "\n\n"
+	descriptionContent := subtitleStyle.Render(wrap(description, displayWidth-5))
 	
-	// How it works section with better styling
-	content += stepStyle.Render("How it works:") + "\n"
-	content += "1. " + wrap("Optionally provide an existing resume to enhance", descWidth-5) + "\n"
-	content += "2. " + wrap("Tell us about your experience, skills, and qualifications", descWidth-5) + "\n"
-	content += "3. " + wrap("We'll generate a polished resume in Markdown format", descWidth-5) + "\n\n"
+	// How it works section
+	howItWorksTitle := stepStyle.Render("How it works:")
+	howItWorksContent := 
+		"1. " + wrap("Optionally provide an existing resume to enhance", displayWidth-5) + "\n" +
+		"2. " + wrap("Tell us about your experience, skills, and qualifications", displayWidth-5) + "\n" +
+		"3. " + wrap("We'll generate a polished resume in Markdown format", displayWidth-5)
 	
-	// API key status with better styling
+	howItWorksSection := lipgloss.JoinVertical(lipgloss.Left, 
+		howItWorksTitle,
+		howItWorksContent)
+	
+	// API key status section
+	var apiStatusSection string
 	if m.apiKeyOk {
-		content += successStyle.Render("✅ API key is valid and ready to use.")
-		content += "\n\n"
-		content += wrap("You're all set to create your professional resume!", descWidth-5)
+		statusContent := successStyle.Render("✅ API key is valid and ready to use.") + "\n\n" +
+			wrap("You're all set to create your professional resume!", displayWidth-5)
+			
+		apiStatusSection = successBoxStyle.Render(statusContent)
 	} else {
-		content += errorStyle.Render("❌ API key is missing or invalid.")
-		content += "\n\n"
-		content += wrap("To use Resumake, you need to set the GEMINI_API_KEY environment variable:", descWidth-5) + "\n"
-		content += "  export GEMINI_API_KEY=your_api_key_here\n\n"
-		content += wrap("You can get an API key from: https://makersuite.google.com/app/apikey", descWidth-5) + "\n"
-		content += errorStyle.Render(wrap("Note: Proceeding without a valid API key will result in errors.", descWidth-5))
+		errorContent := errorStyle.Render("❌ API key is missing or invalid.") + "\n\n" +
+			wrap("To use Resumake, you need to set the GEMINI_API_KEY environment variable:", displayWidth-5) + "\n" +
+			"  export GEMINI_API_KEY=your_api_key_here\n\n" +
+			wrap("You can get an API key from: https://makersuite.google.com/app/apikey", displayWidth-5) + "\n\n" +
+			errorStyle.Render(wrap("Note: Proceeding without a valid API key will result in errors.", displayWidth-5))
+			
+		apiStatusSection = errorBoxStyle.Render(errorContent)
 	}
 	
-	// Keyboard shortcuts in a nice box
-	content += "\n\n"
-	shortcutsTitle := keyboardHintStyle.Bold(true).Render("Keyboard shortcuts:")
-	shortcuts := "• Enter: Continue to next step\n• Ctrl+C: Quit application\n• Esc: Go back (when available)"
+	// Keyboard shortcuts box
+	shortcutsMap := map[string]string{
+		"Enter": "Continue to next step",
+		"Ctrl+C": "Quit application",
+		"Esc": "Go back (when available)",
+	}
+	shortcutsContent := KeyboardShortcuts(shortcutsMap)
 	
-	shortcutsBox := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(subtleColor).
-		Padding(1, 2).
-		Render(shortcutsTitle + "\n" + shortcuts)
-		
-	content += shortcutsBox
-	content += "\n\n"
+	shortcutsTitle := keyboardHintStyle.Bold(true).Render("Keyboard shortcuts:")
+	shortcutsSection := secondaryBoxStyle.Render(shortcutsTitle + "\n\n" + shortcutsContent)
 	
 	// Call to action
-	content += infoStyle.Render("Press Enter to continue...")
+	callToAction := infoStyle.Render("Press Enter to continue...")
 	
-	return content
+	// Join all sections vertically
+	return lipgloss.JoinVertical(lipgloss.Left,
+		welcomeTitle,
+		"",
+		descriptionContent,
+		"",
+		howItWorksSection,
+		"",
+		apiStatusSection,
+		"",
+		shortcutsSection,
+		"",
+		callToAction,
+	)
 }
 
 // renderSourceFileInputView generates the source file input view content
@@ -451,10 +365,71 @@ func renderSuccessView(m Model) string {
 	return content
 }
 
+// renderConfirmGenerateView generates the confirmation screen before generating the resume
+func renderConfirmGenerateView(m Model) string {
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
+	// Calculate display width
+	displayWidth := m.width
+	if displayWidth > 80 {
+		displayWidth = 80 // Cap at 80 chars for readability
+	}
+	if displayWidth < 40 {
+		displayWidth = 40 // Minimum width
+	}
+	
+	// Title
+	title := StyledTitle("Ready to generate your resume", true)
+	
+	// Summary section
+	summaryContent := ""
+	
+	// Show source file info if it was provided
+	if m.sourceContent != "" {
+		summaryContent += "Source file: " + flagValueStyle.Render(m.sourcePathInput.Value()) + "\n"
+		summaryContent += wrap(fmt.Sprintf("Source content: %d characters", len(m.sourceContent)), displayWidth-5) + "\n\n"
+	}
+	
+	// Show input content info
+	summaryContent += wrap(fmt.Sprintf("Input content: %d characters", len(m.stdinContent)), displayWidth-5) + "\n"
+	
+	// Show output path if it was provided via flags
+	if m.flagOutputPath != "" {
+		summaryContent += "\nOutput will be written to: " + pathStyle.Render(m.flagOutputPath)
+	} else {
+		summaryContent += "\nOutput will be written to the default path: " + pathStyle.Render("resume_out.md")
+	}
+	
+	summarySection := primaryBoxStyle.Render(summaryContent)
+	
+	// Keyboard shortcuts
+	shortcutsMap := map[string]string{
+		"Enter": "Confirm and generate resume",
+		"Esc": "Go back to edit details",
+	}
+	shortcutsContent := KeyboardShortcuts(shortcutsMap)
+	shortcutsSection := secondaryBoxStyle.Render(shortcutsContent)
+	
+	// Call to action
+	callToAction := infoStyle.Render("Press Enter to confirm and generate your resume...")
+	
+	// Join all sections vertically
+	return lipgloss.JoinVertical(lipgloss.Left,
+		title,
+		"",
+		summarySection,
+		"",
+		shortcutsSection,
+		"",
+		callToAction,
+	)
+}
+
 // renderErrorView generates the view shown when an error occurs
 func renderErrorView(m Model) string {
-	var content string
-	
 	// Use the shared wrapText utility for consistent text wrapping
 	wrap := func(text string, width int) string {
 		return wrapText(text, width)
@@ -470,65 +445,75 @@ func renderErrorView(m Model) string {
 	}
 	
 	// Title with error indicator
-	content += errorTitleStyle.Render("❌ ERROR: Resume Generation Failed ❌")
-	content += "\n\n"
+	errorTitle := errorTitleStyle.Render("❌ ERROR: Resume Generation Failed ❌")
 	
-	// Error message
-	content += "The following error occurred while generating your resume:"
-	content += "\n\n"
-	content += errorMsgStyle.Render(wrap(m.errorMsg, displayWidth-5))
-	content += "\n\n"
+	// Error message section
+	errorMessageTitle := "The following error occurred while generating your resume:"
+	errorMessageContent := errorMsgStyle.Render(wrap(m.errorMsg, displayWidth-5))
+	
+	errorMessageSection := errorBoxStyle.Render(
+		errorMessageTitle + "\n\n" + errorMessageContent)
 	
 	// Troubleshooting section
-	content += titleStyle.Render("Troubleshooting")
-	content += "\n\n"
+	troubleshootingTitle := titleStyle.Render("Troubleshooting")
+	var troubleshootingContent string
 	
 	// Different troubleshooting suggestions based on error type
-	if strings.Contains(strings.ToLower(m.errorMsg), "api") {
-		content += troubleshootStyle.Render("API-related issues:")
-		content += "\n"
-		content += wrap("• Check your internet connection", displayWidth-5)
-		content += "\n"
-		content += wrap("• Verify your GEMINI_API_KEY environment variable is set correctly", displayWidth-5)
-		content += "\n"
-		content += wrap("• Try again later as the API service might be temporarily unavailable", displayWidth-5)
-		content += "\n"
-		content += wrap("• Check the API usage quota in your Google Cloud Console", displayWidth-5)
-	} else if strings.Contains(strings.ToLower(m.errorMsg), "file") {
-		content += troubleshootStyle.Render("File-related issues:")
-		content += "\n"
-		content += wrap("• Check if the file exists at the specified path", displayWidth-5)
-		content += "\n"
-		content += wrap("• Verify you have read permissions for the file", displayWidth-5)
-		content += "\n"
-		content += wrap("• Try using an absolute path instead of a relative path", displayWidth-5)
+	errorLower := strings.ToLower(m.errorMsg)
+	if strings.Contains(errorLower, "api") || strings.Contains(errorLower, "key") {
+		troubleshootingContent += troubleshootStyle.Render("API-related issues:") + "\n"
+		troubleshootingContent += wrap("• Check your internet connection", displayWidth-5) + "\n"
+		troubleshootingContent += wrap("• Verify your GEMINI_API_KEY environment variable is set correctly", displayWidth-5) + "\n"
+		troubleshootingContent += wrap("• Try again later as the API service might be temporarily unavailable", displayWidth-5) + "\n"
+		troubleshootingContent += wrap("• Check the API usage quota in your Google Cloud Console", displayWidth-5)
+	} else if strings.Contains(errorLower, "file") || strings.Contains(errorLower, "path") || strings.Contains(errorLower, "directory") {
+		troubleshootingContent += troubleshootStyle.Render("File-related issues:") + "\n"
+		troubleshootingContent += wrap("• Check if the file exists at the specified path", displayWidth-5) + "\n"
+		troubleshootingContent += wrap("• Verify you have read permissions for the file", displayWidth-5) + "\n"
+		troubleshootingContent += wrap("• Try using an absolute path instead of a relative path", displayWidth-5)
+	} else if strings.Contains(errorLower, "timeout") || strings.Contains(errorLower, "context") || strings.Contains(errorLower, "deadline") {
+		troubleshootingContent += troubleshootStyle.Render("Timeout-related issues:") + "\n"
+		troubleshootingContent += wrap("• The request might have taken too long to complete", displayWidth-5) + "\n"
+		troubleshootingContent += wrap("• Check your internet connection", displayWidth-5) + "\n"
+		troubleshootingContent += wrap("• Try again with a shorter input", displayWidth-5)
 	} else {
-		content += troubleshootStyle.Render("General troubleshooting:")
-		content += "\n"
-		content += wrap("• Try running the application again", displayWidth-5)
-		content += "\n"
-		content += wrap("• Check the application logs for more details", displayWidth-5)
-		content += "\n"
-		content += wrap("• Verify you have sufficient disk space and memory", displayWidth-5)
+		troubleshootingContent += troubleshootStyle.Render("General troubleshooting:") + "\n"
+		troubleshootingContent += wrap("• Try running the application again", displayWidth-5) + "\n"
+		troubleshootingContent += wrap("• Check the application logs for more details", displayWidth-5) + "\n"
+		troubleshootingContent += wrap("• Verify you have sufficient disk space and memory", displayWidth-5)
 	}
 	
-	// What to try next
-	content += "\n\n"
-	content += infoStyle.Render("What to try next:")
-	content += "\n"
-	content += wrap("1. Address the issue mentioned above", displayWidth-5)
-	content += "\n"
-	content += wrap("2. Run the application again", displayWidth-5)
-	content += "\n"
-	content += wrap("3. If the problem persists, try with simplified input", displayWidth-5)
-	content += "\n\n"
+	troubleshootingSection := secondaryBoxStyle.Render(
+		troubleshootingTitle + "\n\n" + troubleshootingContent)
+	
+	// Next steps section
+	nextStepsTitle := infoStyle.Render("What to try next:")
+	nextStepsContent := 
+		wrap("1. Address the issue mentioned above", displayWidth-5) + "\n" +
+		wrap("2. Run the application again", displayWidth-5) + "\n" +
+		wrap("3. If the problem persists, try with simplified input", displayWidth-5)
+	
+	nextStepsSection := secondaryBoxStyle.Render(
+		nextStepsTitle + "\n\n" + nextStepsContent)
 	
 	// Additional help
-	content += wrap("If you continue to experience issues, check the project documentation or report this problem in the GitHub repository.", displayWidth-5)
-	content += "\n\n"
+	additionalHelp := wrap("If you continue to experience issues, check the project documentation or report this problem in the GitHub repository.", displayWidth-5)
 	
 	// Keyboard shortcuts
-	content += keyboardHintStyle.Render("Press Enter to quit")
+	keyboardHint := keyboardHintStyle.Render("Press Enter to quit")
 	
-	return content
+	// Join all sections vertically
+	return lipgloss.JoinVertical(lipgloss.Left,
+		errorTitle,
+		"",
+		errorMessageSection,
+		"",
+		troubleshootingSection,
+		"",
+		nextStepsSection,
+		"",
+		additionalHelp,
+		"",
+		keyboardHint,
+	)
 }

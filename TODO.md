@@ -1,35 +1,38 @@
 # TODO
 
-## API Client Management
-- [x] Verify API client initialization approach
-  - Description: Confirm the current code in `tui/model.go` properly initializes client/model in `initializeAPIClient`
+- [x] Create consistent color palette and styles
+  - Description: Define base lipgloss styles for titles, text, hints, errors, success, inputs
   - Dependencies: None
   - Priority: High
-- [x] Review and remove redundant `InitializeAPICmd`
-  - Description: Analyze `tui/commands.go` and remove `InitializeAPICmd` if unused
-  - Dependencies: Verification of initialization approach
+- [ ] Improve welcome view
+  - Description: Enhance layout, API key status display, instructions
+  - Dependencies: Consistent styles
   - Priority: High
-- [x] Verify API client cleanup on all exit paths
-  - Description: Ensure `cleanupAPIClient` is called reliably on all program exit paths
-  - Dependencies: None
+- [ ] Enhance generating view with spinner improvements
+  - Description: Better layout, spinner presentation, progress message clarity
+  - Dependencies: Consistent styles
   - Priority: High
-
-## Text Wrapping Functionality
-- [x] Confirm shared text wrapping implementation
-  - Description: Verify all instances of manual text wrapping are replaced with calls to `tui.wrapText`
+- [ ] Improve error view with contextual troubleshooting
+  - Description: Parse error messages to provide specific troubleshooting tips
+  - Dependencies: Consistent styles
+  - Priority: High
+- [ ] Refine success view
+  - Description: Better layout, clearer output path display, add celebratory elements
+  - Dependencies: Consistent styles
+  - Priority: Medium
+- [ ] Refine source file input view
+  - Description: Improve layout, instructions, and input presentation
+  - Dependencies: Consistent styles
+  - Priority: Medium
+- [ ] Refine stdin input view
+  - Description: Improve layout, instructions, tips/examples presentation
+  - Dependencies: Consistent styles
+  - Priority: Medium
+- [ ] Apply consistent text wrapping
+  - Description: Ensure wrapText is applied uniformly across all views
   - Dependencies: None
   - Priority: Medium
-
-## Context Management
-- [x] Add context support to Model
-  - Description: Add `context.Context` field to `tui.Model` and `WithContext` method
-  - Dependencies: None
-  - Priority: Medium
-- [x] Update main.go with cancellable context
-  - Description: Create root context and pass cancel function to signal handler
-  - Dependencies: Model context support
-  - Priority: Medium
-- [x] Modify commands to use context
-  - Description: Update `GenerateResumeCmd` to accept and use context for API requests
-  - Dependencies: Model context support
+- [ ] Add subtle feedback on input focus
+  - Description: Use lipgloss styles to indicate focused input field
+  - Dependencies: Consistent styles
   - Priority: Medium

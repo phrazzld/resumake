@@ -338,18 +338,8 @@ func (m Model) View() string {
 		content = renderStdinInputView(m)
 	
 	case stateConfirmGenerate:
-		content = "Ready to generate your resume!\n\n"
-		if m.sourceContent != "" {
-			content += "Source file: " + m.sourcePathInput.Value() + "\n"
-		}
-		content += "Input length: " + fmt.Sprintf("%d", len(m.stdinContent)) + " characters\n\n"
-		
-		// Show output path if it was provided via flags
-		if m.flagOutputPath != "" {
-			content += "Output will be written to: " + m.flagOutputPath + "\n\n"
-		}
-		
-		content += "Press Enter to confirm, Esc to go back."
+		// Call a dedicated render function for consistency
+		content = renderConfirmGenerateView(m)
 	
 	case stateGenerating:
 		content = renderGeneratingView(m)
