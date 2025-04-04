@@ -44,7 +44,7 @@
   - Dependencies: None
   - Priority: High
 
-- [ ] Create file reading functionality
+- [x] Create file reading functionality
   - Description: Read source resume file if provided
   - Dependencies: CLI flag parsing
   - Priority: High

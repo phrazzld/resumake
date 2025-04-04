@@ -36,11 +36,23 @@ func main() {
 	fmt.Printf("Successfully initialized Gemini client with model: %s\n", api.DefaultModelName)
 	fmt.Println("Model configured with system instructions for resume generation")
 	
-	// Display source path if provided
+	// Read source file if provided
+	var sourceContent string
+	var sourceFileRead bool
+	
 	if flags.SourcePath != "" {
-		fmt.Printf("Using source resume file: %s\n", flags.SourcePath)
+		var err error
+		sourceContent, sourceFileRead, err = input.ReadSourceFileFromFlags(flags)
+		if err != nil {
+			log.Fatalf("Error reading source file: %v", err)
+		}
+		
+		if sourceFileRead {
+			fmt.Printf("Successfully read source resume from: %s\n", flags.SourcePath)
+		}
 	}
 	
 	// Use model in the future for API calls
 	_ = model // Prevent unused variable warning
+	_ = sourceContent // Prevent unused variable warning
 }
