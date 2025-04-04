@@ -6,8 +6,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// mockQuitMsg implements tea.Msg interface for testing quit handling
-type mockQuitMsg struct{}
 
 // TestAPIClientInitialization ensures the API client is initialized only once and at the right moment
 func TestAPIClientInitialization(t *testing.T) {
@@ -51,28 +49,79 @@ func TestAPIClientInitialization(t *testing.T) {
 	})
 }
 
-// TestAPIClientCleanup ensures the API client is closed when application exits
-func TestAPIClientCleanup(t *testing.T) {
-	t.Run("API client is closed on application quit", func(t *testing.T) {
-		// This test will fail until we implement the cleanup logic
-		// We need a way to detect if the client was closed
-		// This may require a mock client or a more complex test setup
-		
-		m := NewModel()
-		m.apiKeyOk = true
-		
-		// First transition to initialize the client
-		updatedModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
-		model := updatedModel.(Model)
-		
-		// Then trigger a quit
-		_, cmd := model.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
-		
-		// We need to verify that the quit command would close the client
-		// This is challenging in a unit test without modifying the code specifically for testing
-		// For now, we'll just ensure the command is a quit command
-		if cmd == nil {
-			t.Error("Expected a command to be returned")
-		}
-	})
+// TestExitHandlersCallCleanup ensures different exit paths call cleanupAPIClient
+func TestExitHandlersCallCleanup(t *testing.T) {
+	// Track if cleanupAPIClient was called
+	originalCleanupFunc := cleanupAPIClient
+	
+	// Test cases for different exit messages
+	testCases := []struct {
+		name string
+		msg  tea.Msg
+	}{
+		{"QuitMsg", tea.QuitMsg{}},
+		{"KeyCtrlC", tea.KeyMsg{Type: tea.KeyCtrlC}},
+		{"KeyEsc", tea.KeyMsg{Type: tea.KeyEsc}},
+	}
+	
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create a counter to track if cleanup was called
+			cleanupCalled := 0
+			
+			// Override the cleanup function with our instrumented version
+			cleanupAPIClient = func(m Model) Model {
+				cleanupCalled++
+				return m
+			}
+			
+			// Create a new model
+			m := NewModel()
+			
+			// Send the test message to trigger exit logic
+			_, _ = m.Update(tc.msg)
+			
+			// Verify that cleanup was called
+			if cleanupCalled == 0 {
+				t.Errorf("Expected cleanupAPIClient to be called for %s, but it wasn't", tc.name)
+			}
+		})
+	}
+	
+	// Test cleanup on Enter key in final states
+	finalStates := []struct {
+		name  string
+		state State
+	}{
+		{"Success State", stateResultSuccess},
+		{"Error State", stateResultError},
+	}
+	
+	for _, fs := range finalStates {
+		t.Run("Enter key in "+fs.name, func(t *testing.T) {
+			// Create a counter to track if cleanup was called
+			cleanupCalled := 0
+			
+			// Override the cleanup function with our instrumented version
+			cleanupAPIClient = func(m Model) Model {
+				cleanupCalled++
+				return m
+			}
+			
+			// Create a new model in the specified final state
+			m := NewModel()
+			m.state = fs.state
+			
+			// Send Enter key message to trigger cleanup
+			_, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			
+			// Verify that cleanup was called
+			if cleanupCalled == 0 {
+				t.Errorf("Expected cleanupAPIClient to be called for Enter key in %s, but it wasn't", fs.name)
+			}
+		})
+	}
+	
+	// Restore the original function
+	cleanupAPIClient = originalCleanupFunc
 }

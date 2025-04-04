@@ -403,10 +403,12 @@ func initializeAPIClient(m Model) (Model, error) {
 	return m, nil
 }
 
-// cleanupAPIClient closes the API client if it was initialized
-func cleanupAPIClient(m Model) Model {
+// Make cleanupAPIClient a variable so it can be mocked in tests
+var cleanupAPIClient = func(m Model) Model {
 	if m.apiClient != nil {
+		// Call Close method
 		m.apiClient.Close()
+		
 		m.apiClient = nil
 		m.apiModel = nil
 	}

@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/phrazzld/resumake/input"
@@ -48,8 +50,8 @@ func main() {
 		model = model.WithOutputPath(flags.OutputPath)
 	}
 	
-	// Create a new Bubble Tea program with our model
-	p := tea.NewProgram(model, tea.WithAltScreen())
+	// Set up signal handling for graceful shutdown
+	p := setupProgramWithSignalHandling(model)
 	
 	// Run the program
 	if _, err := p.Run(); err != nil {
@@ -58,4 +60,32 @@ func main() {
 	
 	// Program finished successfully
 	fmt.Println("\nResumake finished.")
+}
+
+// setupProgramWithSignalHandling creates a new Bubble Tea program with the given model
+// and sets up signal handling for graceful shutdown.
+func setupProgramWithSignalHandling(model tea.Model) *tea.Program {
+	// Create a new Bubble Tea program with our model
+	p := tea.NewProgram(model, tea.WithAltScreen())
+	
+	// Create a channel to listen for signals
+	signalCh := make(chan os.Signal, 1)
+	
+	// Set up signal notification
+	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+	
+	// Start a goroutine to handle signals
+	go func() {
+		sig := <-signalCh
+		
+		// Log the signal that was received
+		log.Printf("Received signal: %v", sig)
+		
+		// Clean up by sending a QuitMsg to the program
+		// This ensures the cleanupAPIClient function is called
+		// before exiting
+		p.Send(tea.QuitMsg{})
+	}()
+	
+	return p
 }

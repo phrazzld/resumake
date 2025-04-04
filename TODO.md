@@ -16,7 +16,7 @@
   - Dependencies: Added API client fields and modified Update method
   - Priority: High
 
-- [ ] Implement proper client cleanup on exit
+- [x] Implement proper client cleanup on exit
   - Description: Add logic to ensure client.Close() is called when the application exits
   - Dependencies: Added API client fields
   - Priority: Medium
