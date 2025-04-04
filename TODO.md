@@ -71,7 +71,7 @@
   - Dependencies: API request execution
   - Priority: High
 
-- [ ] Implement error and edge case handling
+- [x] Implement error and edge case handling
   - Description: Handle API errors, safety ratings, and unexpected response formats
   - Dependencies: API request and response handling
   - Priority: Medium

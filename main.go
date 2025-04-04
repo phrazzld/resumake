@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/generative-ai-go/genai"
 	"github.com/phrazzld/resumake/api"
 	"github.com/phrazzld/resumake/input"
 	"github.com/phrazzld/resumake/output"
@@ -83,7 +84,23 @@ func main() {
 	fmt.Println("Processing API response...")
 	markdownContent, err := output.ProcessResponseContent(response)
 	if err != nil {
-		log.Fatalf("Error processing API response: %v", err)
+		// Check if this is a truncation error and we might be able to recover
+		if response != nil && len(response.Candidates) > 0 && 
+		   response.Candidates[0].FinishReason == genai.FinishReasonMaxTokens {
+			fmt.Println("Warning: Response was truncated due to token limit")
+			fmt.Println("Attempting to recover partial content...")
+			
+			// Try to recover partial content
+			partialContent, recoverErr := api.TryRecoverPartialContent(response)
+			if recoverErr == nil && partialContent != "" {
+				fmt.Println("Successfully recovered partial content with truncation warning")
+				markdownContent = partialContent
+			} else {
+				log.Fatalf("Error processing API response: %v", err)
+			}
+		} else {
+			log.Fatalf("Error processing API response: %v", err)
+		}
 	}
 	
 	// Display API response information

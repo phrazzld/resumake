@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/google/generative-ai-go/genai"
@@ -265,4 +266,138 @@ func TestParseGeneratedContent(t *testing.T) {
 			t.Error("ParseGeneratedContent() with no text parts should return error, got nil")
 		}
 	})
+}
+
+// TestHandleSafetyRatings verifies that responses with safety rating issues 
+// are properly detected and reported
+func TestHandleSafetyRatings(t *testing.T) {
+	// Setup a response with safety rating issues
+	response := &genai.GenerateContentResponse{
+		Candidates: []*genai.Candidate{
+			{
+				Content: &genai.Content{
+					Parts: []genai.Part{
+						genai.Text("Some content that was flagged"),
+					},
+				},
+				FinishReason: genai.FinishReasonSafety,
+				SafetyRatings: []*genai.SafetyRating{
+					{
+						Category:    genai.HarmCategoryHarassment,
+						Probability: genai.HarmProbabilityHigh,
+					},
+				},
+			},
+		},
+	}
+	
+	// Process the response
+	_, err := ProcessResponse(response)
+	
+	// Verify error handling
+	if err == nil {
+		t.Error("ProcessResponse() should return error for safety-blocked content")
+	}
+	
+	// Verify error message content
+	errorMsg := err.Error()
+	if !stringContainsAny(errorMsg, []string{"safety", "content policy", "blocked", "filtered"}) {
+		t.Errorf("Error message should mention safety issues: %s", errorMsg)
+	}
+	
+	// Verify that the error message contains information about the specific safety category
+	if !stringContainsAny(errorMsg, []string{"harassment", "Harassment"}) {
+		t.Errorf("Error message should mention specific safety categories: %s", errorMsg)
+	}
+}
+
+// TestHandleRateLimitErrors verifies that rate limit or quota errors 
+// are properly detected and reported
+func TestHandleRateLimitErrors(t *testing.T) {
+	// Setup a mock model that returns a quota exceeded error
+	ctx := context.Background()
+	mockModel := &MockGenerativeModel{
+		generateContentFunc: func(ctx context.Context, parts ...genai.Part) (*genai.GenerateContentResponse, error) {
+			return nil, errors.New("RESOURCE_EXHAUSTED: Quota exceeded for quota metric 'GenerationRequests'")
+		},
+	}
+	
+	content := &genai.Content{
+		Parts: []genai.Part{
+			genai.Text("Test prompt"),
+		},
+	}
+	
+	// Cast to the interface
+	var model ExecuteRequestInterface = mockModel
+	
+	// Attempt to execute the request
+	_, err := ExecuteRequest(ctx, model, content)
+	
+	// Verify error handling
+	if err == nil {
+		t.Error("ExecuteRequest() should return error for quota exceeded")
+	}
+	
+	// Verify error message content
+	errorMsg := err.Error()
+	if !stringContainsAny(errorMsg, []string{"API quota", "rate limit", "Quota exceeded"}) {
+		t.Errorf("Error message should indicate quota or rate limit issues: %s", errorMsg)
+	}
+	
+	// Verify that the error message includes advice
+	if !stringContainsAny(errorMsg, []string{"retry", "wait", "quota management"}) {
+		t.Errorf("Error message should include advice on addressing quota issues: %s", errorMsg)
+	}
+}
+
+// TestRecoverFromPartialResponse verifies that we can extract usable content
+// from truncated responses when possible
+func TestRecoverFromPartialResponse(t *testing.T) {
+	// Setup a response with a truncated completion
+	partialContent := "# Resume\n\n## Skills\n\n- Go\n- Python\n\n## Experience\n\n- Software Engineer at"
+	response := &genai.GenerateContentResponse{
+		Candidates: []*genai.Candidate{
+			{
+				Content: &genai.Content{
+					Parts: []genai.Part{
+						genai.Text(partialContent),
+					},
+				},
+				FinishReason: genai.FinishReasonMaxTokens,
+			},
+		},
+	}
+	
+	// Process the response
+	content, err := TryRecoverPartialContent(response)
+	
+	// Verify we get usable content with a warning
+	if err != nil {
+		t.Errorf("TryRecoverPartialContent() should not return an error, got: %v", err)
+	}
+	
+	// Should return the partial content
+	if content == "" {
+		t.Error("TryRecoverPartialContent() should return partial content even if truncated")
+	}
+	
+	// Content should have a warning about being truncated
+	if !strings.Contains(content, partialContent) {
+		t.Error("Recovered content should contain the original partial content")
+	}
+	
+	if !strings.Contains(content, "Note: This content was truncated") {
+		t.Error("Recovered content should include a warning about truncation")
+	}
+}
+
+// Helper function to check if a string contains any of the provided substrings
+func stringContainsAny(s string, substrings []string) bool {
+	for _, sub := range substrings {
+		if strings.Contains(s, sub) {
+			return true
+		}
+	}
+	return false
 }
