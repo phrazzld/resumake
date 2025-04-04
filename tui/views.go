@@ -43,6 +43,14 @@ var (
 		
 	exampleStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#BBBBFF"))
+		
+	progressStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFAA44")).
+		Bold(true)
+		
+	stepStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#44AAFF")).
+		Bold(true)
 )
 
 // renderWelcomeView generates the welcome screen content
@@ -197,6 +205,53 @@ func renderStdinInputView(m Model) string {
 	content += keyboardHintStyle.Render("• Ctrl+D when finished")
 	content += "\n"
 	content += keyboardHintStyle.Render("• Ctrl+C to quit")
+	
+	return content
+}
+
+// renderGeneratingView generates the view shown during resume generation
+func renderGeneratingView(m Model) string {
+	var content string
+	
+	// Title with animated spinner
+	content += titleStyle.Render("Generating Your Resume")
+	content += "\n\n"
+	
+	// Spinner and status
+	content += m.spinner.View() + " " + progressStyle.Render("Processing your information")
+	content += "\n\n"
+	
+	// Input information
+	totalChars := len(m.stdinContent) + len(m.sourceContent)
+	content += fmt.Sprintf("Processing %d characters of input...", totalChars)
+	content += "\n"
+	
+	// Source file info if provided
+	if m.sourceContent != "" {
+		content += "Source file: " + m.sourcePathInput.Value()
+		content += "\n"
+	}
+	
+	// Estimated time
+	content += "\n"
+	content += infoStyle.Render("This may take up to 60 seconds depending on the input size.")
+	content += "\n\n"
+	
+	// Progress information
+	if m.progressStep != "" && m.progressMsg != "" {
+		content += stepStyle.Render("Step: " + m.progressStep)
+		content += "\n"
+		content += m.progressMsg
+		content += "\n\n"
+	} else {
+		content += "Please wait while we generate your resume..."
+		content += "\n\n"
+	}
+	
+	// Additional status info
+	content += "The Gemini API is analyzing your experience and crafting a professional resume."
+	content += "\n"
+	content += "You'll be able to review and save the result when it's complete."
 	
 	return content
 }

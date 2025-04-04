@@ -297,16 +297,7 @@ func (m Model) View() string {
 		content += "Press Enter to confirm, Esc to go back."
 	
 	case stateGenerating:
-		content = "Generating your resume...\n\n"
-		content += m.spinner.View() + " Please wait, this may take a minute.\n\n"
-		
-		// Show progress information if available
-		if m.progressStep != "" {
-			content += fmt.Sprintf("Step: %s\n", m.progressStep)
-		}
-		if m.progressMsg != "" {
-			content += m.progressMsg
-		}
+		content = renderGeneratingView(m)
 	
 	case stateResultSuccess:
 		content = "----- RESUME GENERATION COMPLETE -----\n"

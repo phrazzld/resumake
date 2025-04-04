@@ -4,8 +4,10 @@ import (
 	"strings"
 	"testing"
 	
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func TestRenderWelcomeView(t *testing.T) {
@@ -188,5 +190,70 @@ func TestRenderStdinInputView(t *testing.T) {
 	// 7. Should include helpful tips or examples for resume content
 	if !strings.Contains(stdinView, "Tips:") || !strings.Contains(stdinView, "Example:") {
 		t.Error("Stdin input view should include helpful tips or examples")
+	}
+}
+
+func TestRenderGeneratingView(t *testing.T) {
+	// Initialize spinner
+	sp := spinner.New()
+	sp.Spinner = spinner.Dot
+	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+	
+	// Create model with spinner and progress information
+	model := Model{
+		spinner:      sp,
+		progressStep: "Processing",
+		progressMsg:  "Analyzing your experience...",
+		stdinContent: "Sample content for resume",
+		sourceContent: "Sample source content",
+	}
+	
+	// Get the rendered view
+	generatingView := renderGeneratingView(model)
+	
+	// The generating view should:
+	// 1. Contain a title or heading about generation process
+	if !strings.Contains(generatingView, "Generating") {
+		t.Error("Generating view should contain a title about the generation process")
+	}
+	
+	// 2. Display the spinner component
+	if !strings.Contains(generatingView, sp.View()) {
+		t.Error("Generating view should display the spinner component")
+	}
+	
+	// 3. Show progress step if provided
+	if !strings.Contains(generatingView, "Processing") {
+		t.Error("Generating view should show the current progress step")
+	}
+	
+	// 4. Show progress message if provided
+	if !strings.Contains(generatingView, "Analyzing your experience") {
+		t.Error("Generating view should show the progress message")
+	}
+	
+	// 5. Include information about inputs
+	if !strings.Contains(generatingView, "characters") {
+		t.Error("Generating view should include information about the input size")
+	}
+	
+	// Test with empty progress information
+	emptyProgressModel := Model{
+		spinner:      sp,
+		progressStep: "",
+		progressMsg:  "",
+		stdinContent: "Sample content for resume",
+	}
+	
+	emptyProgressView := renderGeneratingView(emptyProgressModel)
+	
+	// 6. Should handle missing progress information gracefully
+	if !strings.Contains(emptyProgressView, "Please wait") {
+		t.Error("Generating view should show a waiting message when no progress info is available")
+	}
+	
+	// 7. Include estimated time information
+	if !strings.Contains(generatingView, "may take") {
+		t.Error("Generating view should include information about estimated completion time")
 	}
 }
