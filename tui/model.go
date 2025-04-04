@@ -45,6 +45,7 @@ type Model struct {
 	state         State
 	apiKeyOk      bool
 	errorMsg      string
+	appVersion    string // Version information
 	
 	// Input components
 	sourcePathInput textinput.Model
@@ -112,6 +113,7 @@ func NewModel() Model {
 	return Model{
 		state:          stateWelcome,
 		apiKeyOk:       apiKeyOk,
+		appVersion:     "1.0.0", // Default version
 		sourcePathInput: sourceInput,
 		stdinInput:     stdinTA,
 		spinner:        sp,
@@ -423,5 +425,11 @@ func (m Model) WithOutputPath(path string) Model {
 // This allows passing a cancellable context for API operations
 func (m Model) WithContext(ctx context.Context) Model {
 	m.ctx = ctx
+	return m
+}
+
+// WithVersion returns a copy of the model with the version set
+func (m Model) WithVersion(version string) Model {
+	m.appVersion = version
 	return m
 }

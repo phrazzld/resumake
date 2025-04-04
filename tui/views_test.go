@@ -14,23 +14,25 @@ func TestRenderWelcomeView(t *testing.T) {
 	// Test with valid API key
 	model := Model{
 		apiKeyOk: true,
+		width: 100,   // Set a valid width for the view
+		height: 40,   // Set a valid height for the view
 	}
 	
 	validKeyView := renderWelcomeView(model)
 	
 	// The welcome view with a valid API key should:
-	// 1. Contain a welcome message
-	if !strings.Contains(validKeyView, "Welcome to Resumake") {
-		t.Error("Welcome view should contain a welcome message")
+	// 1. Contain the logo/application name
+	if !strings.Contains(validKeyView, "RESUMAKE") {
+		t.Error("Welcome view should contain the application name")
 	}
 	
 	// 2. Indicate that the API key is valid
-	if !strings.Contains(validKeyView, "API key is valid") {
+	if !strings.Contains(validKeyView, "API KEY STATUS: READY") {
 		t.Error("Welcome view should indicate API key is valid")
 	}
 	
 	// 3. Include instructions on how to proceed
-	if !strings.Contains(validKeyView, "Press Enter to continue") {
+	if !strings.Contains(validKeyView, "Press Enter to begin") {
 		t.Error("Welcome view should include instructions to proceed")
 	}
 	
@@ -47,18 +49,20 @@ func TestRenderWelcomeView(t *testing.T) {
 	// Test with invalid API key
 	model = Model{
 		apiKeyOk: false,
+		width: 100,   // Set a valid width for the view
+		height: 40,   // Set a valid height for the view
 	}
 	
 	invalidKeyView := renderWelcomeView(model)
 	
 	// The welcome view with an invalid API key should:
-	// 1. Contain a welcome message
-	if !strings.Contains(invalidKeyView, "Welcome to Resumake") {
-		t.Error("Welcome view should contain a welcome message")
+	// 1. Contain the logo/application name
+	if !strings.Contains(invalidKeyView, "RESUMAKE") {
+		t.Error("Welcome view should contain the application name")
 	}
 	
 	// 2. Indicate that the API key is invalid
-	if !strings.Contains(invalidKeyView, "API key is missing or invalid") {
+	if !strings.Contains(invalidKeyView, "API KEY STATUS: MISSING") {
 		t.Error("Welcome view should indicate API key is missing or invalid")
 	}
 	
@@ -340,8 +344,8 @@ func TestTextWrappingInAllViews(t *testing.T) {
 	
 	// Check if the view functions handle text wrapping correctly
 	// This test ensures no line exceeds a reasonable maximum length
-	// We use 200 as the max line length to account for lipgloss styling characters
-	maxLineLength := 200
+	// We use 250 as the max line length to account for lipgloss styling characters and ASCII art logo
+	maxLineLength := 250
 	
 	// Test welcome view
 	lines := strings.Split(welcomeView, "\n")

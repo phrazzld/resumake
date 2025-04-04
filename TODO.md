@@ -4,7 +4,7 @@
   - Description: Define base lipgloss styles for titles, text, hints, errors, success, inputs
   - Dependencies: None
   - Priority: High
-- [ ] Improve welcome view
+- [x] Improve welcome view
   - Description: Enhance layout, API key status display, instructions
   - Dependencies: Consistent styles
   - Priority: High

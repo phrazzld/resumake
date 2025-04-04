@@ -437,13 +437,15 @@ func TestModelView(t *testing.T) {
 		m := NewModel()
 		m.state = stateWelcome
 		m.apiKeyOk = true
+		m.width = 100  // Set a valid width for the view
+		m.height = 40  // Set a valid height for the view
 		
 		view := m.View()
-		if !strings.Contains(view, "Welcome to Resumake") {
-			t.Error("Expected welcome view to contain welcome message")
+		if !strings.Contains(view, "RESUMAKE") {
+			t.Error("Expected welcome view to contain application name")
 		}
 		
-		if !strings.Contains(view, "API key is valid") {
+		if !strings.Contains(view, "API KEY STATUS: READY") {
 			t.Error("Expected welcome view to indicate valid API key")
 		}
 	})

@@ -16,75 +16,176 @@ func renderWelcomeView(m Model) string {
 	
 	// Calculate display width
 	displayWidth := m.width
-	if displayWidth > 80 {
-		displayWidth = 80 // Cap at 80 chars for readability
+	if displayWidth > 100 {
+		displayWidth = 100 // Cap at 100 chars for readability
 	}
-	if displayWidth < 40 {
-		displayWidth = 40 // Minimum width
+	if displayWidth < 80 {
+		displayWidth = 80 // Minimum width for the logo
 	}
 	
-	// Title with border
-	welcomeTitle := StyledTitle("Welcome to Resumake!", true)
+	// Container for our welcome screen
+	docStyle := lipgloss.NewStyle().
+		Align(lipgloss.Center).
+		Bold(false).
+		Width(displayWidth)
 	
-	// Application description
-	description := "This tool helps you create a professional resume from your experience and qualifications."
-	descriptionContent := subtitleStyle.Render(wrap(description, displayWidth-5))
+	// ASCII art logo
+	logo := LogoText()
 	
-	// How it works section
-	howItWorksTitle := stepStyle.Render("How it works:")
-	howItWorksContent := 
-		"1. " + wrap("Optionally provide an existing resume to enhance", displayWidth-5) + "\n" +
-		"2. " + wrap("Tell us about your experience, skills, and qualifications", displayWidth-5) + "\n" +
-		"3. " + wrap("We'll generate a polished resume in Markdown format", displayWidth-5)
+	// Version info (positioned below the logo)
+	version := VersionInfo(m.appVersion)
 	
-	howItWorksSection := lipgloss.JoinVertical(lipgloss.Left, 
-		howItWorksTitle,
-		howItWorksContent)
+	// Create a header with logo and version
+	header := lipgloss.JoinVertical(
+		lipgloss.Center,
+		logo,
+		"",
+		version,
+	)
 	
-	// API key status section
-	var apiStatusSection string
+	// Tagline
+	tagline := StyledTitle("Create Professional Resumes with AI", false, lipgloss.Center)
+	
+	// Application description with better styling
+	description := "Resumake helps you create polished resumes from your experience and qualifications. " +
+		"Powered by Google's Gemini AI, it transforms your input into a professional-looking document."
+	
+	descriptionStyle := subtitleStyle.Copy().
+		Width(displayWidth - 20).
+		Align(lipgloss.Center)
+	
+	descriptionContent := descriptionStyle.Render(description)
+	
+	// Features section
+	featuresTitle := stepStyle.Render("Key Features:")
+	
+	featuresContent := 
+		"• " + boldStyle.Render("AI-Powered Resume Generation") + ": Transform your experience into a professional resume\n" +
+		"• " + boldStyle.Render("Enhance Existing Resumes") + ": Improve or update your current resume\n" +
+		"• " + boldStyle.Render("Markdown Format") + ": Easy to edit or convert to other formats\n" +
+		"• " + boldStyle.Render("Simple Terminal Interface") + ": No need for complex GUI applications"
+	
+	featuresBox := primaryBoxStyle.Copy().
+		BorderForeground(secondaryColor).
+		Width(displayWidth - 20).
+		AlignHorizontal(lipgloss.Center).
+		Render(featuresTitle + "\n\n" + featuresContent)
+	
+	// How it works section with clearer steps and icons
+	howItWorksTitle := stepStyle.Render("How It Works:")
+	
+	step1 := successStyle.Render("Step 1 ") + boldStyle.Render("➤ Input") + 
+		": Optionally provide an existing resume to enhance"
+	step2 := successStyle.Render("Step 2 ") + boldStyle.Render("➤ Details") + 
+		": Tell us about your experience, skills, and qualifications"
+	step3 := successStyle.Render("Step 3 ") + boldStyle.Render("➤ Generate") + 
+		": We'll use AI to create a polished resume in Markdown format"
+	
+	stepsContent := lipgloss.JoinVertical(
+		lipgloss.Left,
+		wrap(step1, displayWidth-25),
+		"",
+		wrap(step2, displayWidth-25),
+		"",
+		wrap(step3, displayWidth-25),
+	)
+	
+	stepsBox := accentBoxStyle.Copy().
+		Width(displayWidth - 20).
+		AlignHorizontal(lipgloss.Center).
+		Render(howItWorksTitle + "\n\n" + stepsContent)
+	
+	// API key status section with clear visual indicator
+	var apiStatusBox string
+		
 	if m.apiKeyOk {
-		statusContent := successStyle.Render("✅ API key is valid and ready to use.") + "\n\n" +
-			wrap("You're all set to create your professional resume!", displayWidth-5)
-			
-		apiStatusSection = successBoxStyle.Render(statusContent)
+		statusContent := lipgloss.JoinVertical(
+			lipgloss.Left,
+			successStyle.Render("✅  API KEY STATUS: READY"),
+			"",
+			wrap("Your Google Gemini API key is valid and ready to use.", displayWidth-25),
+			wrap("You're all set to create your professional resume!", displayWidth-25),
+		)
+		
+		apiStatusBox = successBoxStyle.Copy().
+			Width(displayWidth - 20).
+			AlignHorizontal(lipgloss.Center).
+			Render(statusContent)
 	} else {
-		errorContent := errorStyle.Render("❌ API key is missing or invalid.") + "\n\n" +
-			wrap("To use Resumake, you need to set the GEMINI_API_KEY environment variable:", displayWidth-5) + "\n" +
-			"  export GEMINI_API_KEY=your_api_key_here\n\n" +
-			wrap("You can get an API key from: https://makersuite.google.com/app/apikey", displayWidth-5) + "\n\n" +
-			errorStyle.Render(wrap("Note: Proceeding without a valid API key will result in errors.", displayWidth-5))
-			
-		apiStatusSection = errorBoxStyle.Render(errorContent)
+		errorTitle := errorStyle.Render("❌  API KEY STATUS: MISSING")
+		
+		instructionsTitle := boldStyle.Render("To use Resumake, you need a Google Gemini API key:")
+		instructions := "1. Visit: https://makersuite.google.com/app/apikey\n" +
+			"2. Create a free API key\n" +
+			"3. Set the environment variable:\n\n" +
+			"   " + pathStyle.Render("export GEMINI_API_KEY=your_key_here")
+		
+		warningText := errorStyle.Render("Note: ") + 
+			wrap("Proceeding without a valid API key will result in errors.", displayWidth-30)
+		
+		errorContent := lipgloss.JoinVertical(
+			lipgloss.Left,
+			errorTitle,
+			"",
+			instructionsTitle,
+			"",
+			instructions,
+			"",
+			warningText,
+		)
+		
+		apiStatusBox = errorBoxStyle.Copy().
+			Width(displayWidth - 20).
+			AlignHorizontal(lipgloss.Center).
+			Render(errorContent)
 	}
 	
-	// Keyboard shortcuts box
-	shortcutsMap := map[string]string{
-		"Enter": "Continue to next step",
-		"Ctrl+C": "Quit application",
-		"Esc": "Go back (when available)",
+	// Keyboard shortcuts in a cleaner format
+	shortcutsTitle := keyboardHintStyle.Bold(true).Render("Keyboard Shortcuts")
+	
+	shortcutItems := []string{
+		boldStyle.Render("Enter") + ": Continue to next step",
+		boldStyle.Render("Ctrl+C") + ": Quit application",
+		boldStyle.Render("Esc") + ": Go back (when available)",
 	}
-	shortcutsContent := KeyboardShortcuts(shortcutsMap)
 	
-	shortcutsTitle := keyboardHintStyle.Bold(true).Render("Keyboard shortcuts:")
-	shortcutsSection := secondaryBoxStyle.Render(shortcutsTitle + "\n\n" + shortcutsContent)
+	shortcutsContent := lipgloss.JoinVertical(
+		lipgloss.Left,
+		shortcutItems...,
+	)
 	
-	// Call to action
-	callToAction := infoStyle.Render("Press Enter to continue...")
+	shortcutsBox := secondaryBoxStyle.Copy().
+		Width(displayWidth - 20).
+		AlignHorizontal(lipgloss.Center).
+		Render(shortcutsTitle + "\n\n" + shortcutsContent)
 	
-	// Join all sections vertically
-	return lipgloss.JoinVertical(lipgloss.Left,
-		welcomeTitle,
-		"",
-		descriptionContent,
-		"",
-		howItWorksSection,
-		"",
-		apiStatusSection,
-		"",
-		shortcutsSection,
-		"",
-		callToAction,
+	// Call to action with more emphasis
+	callToAction := infoStyle.Copy().
+		Background(darkColor).
+		Padding(0, 1).
+		MarginTop(1).
+		Render("Press Enter to begin...")
+	
+	// Compose the final document with all elements aligned
+	return docStyle.Render(
+		lipgloss.JoinVertical(
+			lipgloss.Center,
+			header,
+			"",
+			tagline,
+			"",
+			descriptionContent,
+			"",
+			featuresBox,
+			"",
+			stepsBox,
+			"",
+			apiStatusBox,
+			"",
+			shortcutsBox,
+			"",
+			callToAction,
+		),
 	)
 }
 
@@ -382,7 +483,7 @@ func renderConfirmGenerateView(m Model) string {
 	}
 	
 	// Title
-	title := StyledTitle("Ready to generate your resume", true)
+	title := StyledTitle("Ready to generate your resume", true, lipgloss.Left)
 	
 	// Summary section
 	summaryContent := ""

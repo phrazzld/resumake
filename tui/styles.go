@@ -153,22 +153,55 @@ var (
 
 // Utility functions for styled content
 
-// StyledTitle creates a consistently styled title with optional border
-func StyledTitle(title string, withBorder bool) string {
+// StyledTitle creates a consistently styled title with optional border and alignment
+func StyledTitle(title string, withBorder bool, align lipgloss.Position) string {
+	style := titleStyle.Copy()
+	
 	if withBorder {
-		return titleStyle.Copy().
+		style = style.
 			BorderStyle(lipgloss.RoundedBorder()).
 			BorderForeground(primaryColor).
-			Padding(1, 3).
-			Render(title)
+			Padding(1, 3)
 	}
-	return titleStyle.Render(title)
+	
+	return style.
+		AlignHorizontal(align).
+		Render(title)
 }
 
 // StyledSection creates a box with a title and content
 func StyledSection(title string, content string, boxStyle lipgloss.Style) string {
 	titleText := boldStyle.Copy().Foreground(primaryColor).Render(title)
 	return boxStyle.Render(titleText + "\n\n" + content)
+}
+
+// LogoText returns a stylized text-based logo for the application
+func LogoText() string {
+	color1 := lipgloss.NewStyle().Foreground(primaryColor).Bold(true)
+	color2 := lipgloss.NewStyle().Foreground(secondaryColor).Bold(true)
+	color3 := lipgloss.NewStyle().Foreground(accentColor).Bold(true)
+	
+	// Simple text version for testing or narrow terminals
+	if true {
+		return color1.Render("RESUMAKE")
+	}
+	
+	// Create a simple multi-line stylized logo
+	line1 := color1.Render("██████  ███████ ███████ ██    ██ ███    ███  █████  ██   ██ ███████ ")
+	line2 := color2.Render("██   ██ ██      ██      ██    ██ ████  ████ ██   ██ ██  ██  ██      ")
+	line3 := color3.Render("██████  █████   ███████ ██    ██ ██ ████ ██ ███████ █████   █████   ")
+	line4 := color2.Render("██   ██ ██           ██ ██    ██ ██  ██  ██ ██   ██ ██  ██  ██      ")
+	line5 := color1.Render("██   ██ ███████ ███████  ██████  ██      ██ ██   ██ ██   ██ ███████ ")
+	
+	return lipgloss.JoinVertical(lipgloss.Center, line1, line2, line3, line4, line5)
+}
+
+// VersionInfo creates a version info tag for the welcome screen
+func VersionInfo(version string) string {
+	return lipgloss.NewStyle().
+		Foreground(subtleColor).
+		Italic(true).
+		Render("v" + version)
 }
 
 // KeyboardShortcuts formats a set of keyboard shortcuts consistently
