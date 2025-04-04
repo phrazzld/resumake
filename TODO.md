@@ -61,12 +61,12 @@
   - Priority: High
 
 ## API Call Handling
-- [ ] Implement API request execution
+- [x] Implement API request execution
   - Description: Send constructed prompt to Gemini API
   - Dependencies: Prompt construction, Gemini client
   - Priority: High
 
-- [ ] Add response handling
+- [x] Add response handling
   - Description: Process API response and extract generated markdown
   - Dependencies: API request execution
   - Priority: High

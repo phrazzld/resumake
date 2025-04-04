@@ -7,6 +7,7 @@ import (
 
 	"github.com/phrazzld/resumake/api"
 	"github.com/phrazzld/resumake/input"
+	"github.com/phrazzld/resumake/output"
 	"github.com/phrazzld/resumake/prompt"
 )
 
@@ -71,7 +72,23 @@ func main() {
 	// Display confirmation that the prompt has been built
 	fmt.Println("Successfully built prompt from inputs")
 	
-	// Store the Gemini model and prompt content for future API calls
-	_ = model // Prevent unused variable warning
-	_ = promptContent // Prevent unused variable warning
+	// Execute API request with the prompt content
+	fmt.Println("Executing API request to generate resume...")
+	response, err := api.ExecuteRequest(ctx, model, promptContent)
+	if err != nil {
+		log.Fatalf("Error executing API request: %v", err)
+	}
+	
+	// Process the API response
+	fmt.Println("Processing API response...")
+	markdownContent, err := output.ProcessResponseContent(response)
+	if err != nil {
+		log.Fatalf("Error processing API response: %v", err)
+	}
+	
+	// Display API response information
+	fmt.Println("Successfully received and processed API response")
+	fmt.Println("Validated and cleaned Markdown content")
+	// For now, just print the length of the generated text until we implement file writing
+	fmt.Printf("Generated resume with %d characters\n", len(markdownContent))
 }

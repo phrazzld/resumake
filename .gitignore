@@ -28,3 +28,6 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Documentation for Claude
+docs/
