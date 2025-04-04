@@ -110,7 +110,7 @@ func renderWelcomeView(m Model) string {
 	var content string
 	
 	// Title - using prettier borders with proper styling
-	welcomeTitle := titleStyle.Copy().
+	welcomeTitle := titleStyle.
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(primaryColor).
 		Padding(1, 3).
@@ -119,33 +119,9 @@ func renderWelcomeView(m Model) string {
 	content += welcomeTitle
 	content += "\n\n"
 	
-	// Helper function to wrap text at a reasonable width
-	// This ensures text doesn't get truncated on narrow terminals
+	// Use the shared wrapText utility for consistent text wrapping
 	wrap := func(text string, width int) string {
-		if width <= 0 {
-			width = 80 // Default to 80 if we don't have width info
-		}
-		
-		// Simple word wrapping
-		words := strings.Fields(text)
-		if len(words) == 0 {
-			return ""
-		}
-		
-		result := words[0]
-		lineLen := len(words[0])
-		
-		for _, word := range words[1:] {
-			if lineLen+len(word)+1 > width {
-				result += "\n" + word
-				lineLen = len(word)
-			} else {
-				result += " " + word
-				lineLen += len(word) + 1
-			}
-		}
-		
-		return result
+		return wrapText(text, width)
 	}
 	
 	// Application description - now with text wrapping
@@ -180,7 +156,7 @@ func renderWelcomeView(m Model) string {
 	
 	// Keyboard shortcuts in a nice box
 	content += "\n\n"
-	shortcutsTitle := keyboardHintStyle.Copy().Bold(true).Render("Keyboard shortcuts:")
+	shortcutsTitle := keyboardHintStyle.Bold(true).Render("Keyboard shortcuts:")
 	shortcuts := "• Enter: Continue to next step\n• Ctrl+C: Quit application\n• Esc: Go back (when available)"
 	
 	shortcutsBox := lipgloss.NewStyle().
@@ -305,32 +281,9 @@ func renderStdinInputView(m Model) string {
 func renderGeneratingView(m Model) string {
 	var content string
 	
-	// Helper function to wrap text at a reasonable width
+	// Use the shared wrapText utility for consistent text wrapping
 	wrap := func(text string, width int) string {
-		if width <= 0 {
-			width = 80 // Default to 80 if we don't have width info
-		}
-		
-		// Simple word wrapping
-		words := strings.Fields(text)
-		if len(words) == 0 {
-			return ""
-		}
-		
-		result := words[0]
-		lineLen := len(words[0])
-		
-		for _, word := range words[1:] {
-			if lineLen+len(word)+1 > width {
-				result += "\n" + word
-				lineLen = len(word)
-			} else {
-				result += " " + word
-				lineLen += len(word) + 1
-			}
-		}
-		
-		return result
+		return wrapText(text, width)
 	}
 	
 	// Calculate display width
@@ -343,7 +296,7 @@ func renderGeneratingView(m Model) string {
 	}
 	
 	// Title with more prominent styling
-	generatingTitle := titleStyle.Copy().
+	generatingTitle := titleStyle.
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(primaryColor).
 		Padding(1, 2).
