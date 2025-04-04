@@ -54,6 +54,20 @@ source ~/.bashrc
 
 ## Usage
 
+### Getting Help
+
+To see available command-line options and their descriptions:
+
+```bash
+resumake --help
+```
+
+or use the shorter form:
+
+```bash
+resumake -h
+```
+
 ### Basic Usage
 
 Run resumake and enter your professional experience:
@@ -81,6 +95,14 @@ To change the output filename:
 ```bash
 resumake -output my_new_resume.md
 ```
+
+### Available Command-Line Options
+
+resumake supports the following command-line options:
+
+- `-h, --help` - Display help information and exit
+- `-source string` - Path to an existing resume file (optional)
+- `-output string` - Path for the output resume file (default: resume_out.md)
 
 ## Example
 
@@ -128,6 +150,12 @@ Experienced Software Engineer with 5 years of expertise in cloud infrastructure 
 - API rate limits may apply depending on your Gemini API key tier
 
 ## Troubleshooting
+
+### Command-Line Usage
+
+If you're unsure about how to use resumake:
+- Run `resumake --help` to see all available options and their descriptions
+- Check the [Usage](#usage) section of this README for examples
 
 ### API Key Issues
 

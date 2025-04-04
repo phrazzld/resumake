@@ -5,9 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Run Commands
 - Build: `go build -o resumake`
 - Run: `GEMINI_API_KEY=your_key ./resumake [-source existing_resume.md]`
+- Help: `./resumake --help` or `./resumake -h`
 - Test: `go test ./...` 
 - Single test: `go test -run TestName ./path/to/package`
 - Lint: `golangci-lint run`
+- Architect: `architect --task "description" *.go */*.go` (generates a PLAN.md file for implementing features)
 
 ## Code Style Guidelines
 - Formatting: Use `gofmt` for code formatting
