@@ -77,6 +77,9 @@ type Model struct {
 	// API client instances
 	apiClient     *genai.Client       // Initialized API client instance
 	apiModel      *genai.GenerativeModel // Initialized model instance
+	
+	// Context for cancellation and value propagation
+	ctx           context.Context
 }
 
 // NewModel creates a new Model with default values.
@@ -119,6 +122,8 @@ func NewModel() Model {
 		// API client instances start as nil and will be initialized as needed
 		apiClient:      nil,
 		apiModel:       nil,
+		// Initialize with a background context
+		ctx:            context.Background(),
 	}
 }
 
@@ -146,13 +151,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Success {
 			m.sourceContent = msg.Content
 		} else {
-			m.state = stateResultError
-			m.errorMsg = msg.Error.Error()
-			return m, nil
-		}
-		
-	case APIInitResultMsg:
-		if !msg.Success {
 			m.state = stateResultError
 			m.errorMsg = msg.Error.Error()
 			return m, nil
@@ -262,9 +260,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				
 				// Add progress update and API commands
+				// Pass the model's context to GenerateResumeCmd for cancellation support
 				cmds = append(cmds, 
 					SendProgressUpdateCmd("Starting", "Initializing resume generation..."),
-					GenerateResumeCmd(m.apiClient, m.apiModel, m.sourceContent, m.stdinContent, outputPath, false),
+					GenerateResumeCmd(m.ctx, m.apiClient, m.apiModel, m.sourceContent, m.stdinContent, outputPath, false),
 				)
 			} else if msg.Type == tea.KeyEsc {
 				m.state = stateInputStdin
@@ -389,9 +388,9 @@ func initializeAPIClient(m Model) (Model, error) {
 		return m, fmt.Errorf("API key error: %w", err)
 	}
 	
-	// Initialize client and model
-	ctx := context.Background()
-	client, model, err := api.InitializeClient(ctx, apiKey)
+	// Initialize client and model using the model's context
+	// Use the model's context for proper cancellation
+	client, model, err := api.InitializeClient(m.ctx, apiKey)
 	if err != nil {
 		return m, fmt.Errorf("failed to initialize API client: %w", err)
 	}
@@ -427,5 +426,12 @@ func (m Model) WithSourcePath(path string) Model {
 // Used when the output path is provided via command-line flags
 func (m Model) WithOutputPath(path string) Model {
 	m.flagOutputPath = path
+	return m
+}
+
+// WithContext returns a copy of the model with the context set
+// This allows passing a cancellable context for API operations
+func (m Model) WithContext(ctx context.Context) Model {
+	m.ctx = ctx
 	return m
 }

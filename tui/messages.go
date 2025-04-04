@@ -10,11 +10,6 @@ type FileReadResultMsg struct {
 	Error   error  // The error that occurred (if unsuccessful)
 }
 
-// APIInitResultMsg is returned when API initialization completes.
-type APIInitResultMsg struct {
-	Success bool  // Whether the API initialization was successful
-	Error   error // The error that occurred (if unsuccessful)
-}
 
 // APIResultMsg is returned when an API request completes.
 type APIResultMsg struct {

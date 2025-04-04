@@ -178,23 +178,37 @@ func renderWelcomeView(m Model) string {
 func renderSourceFileInputView(m Model) string {
 	var content string
 	
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
+	// Calculate display width
+	displayWidth := m.width
+	if displayWidth > 80 {
+		displayWidth = 80 // Cap at 80 chars for readability
+	}
+	if displayWidth < 40 {
+		displayWidth = 40 // Minimum width
+	}
+	
 	// Title
 	content += titleStyle.Render("Source File Input")
 	content += "\n\n"
 	
 	// Instructions and explanation
-	content += "You can optionally provide an existing resume file to use as a starting point."
+	content += wrap("You can optionally provide an existing resume file to use as a starting point.", displayWidth-5)
 	content += "\n"
-	content += "This helps generate a better result by incorporating your existing content."
+	content += wrap("This helps generate a better result by incorporating your existing content.", displayWidth-5)
 	content += "\n\n"
 	
 	// Show if path was provided via flags
 	if m.flagSourcePath != "" {
 		content += infoStyle.Render("A file path was provided from command line flags:")
 		content += "\n"
-		content += flagValueStyle.Render(m.flagSourcePath)
+		content += flagValueStyle.Render(wrap(m.flagSourcePath, displayWidth-5))
 		content += "\n\n"
-		content += "You can edit this path or leave it as is."
+		content += wrap("You can edit this path or leave it as is.", displayWidth-5)
 		content += "\n\n"
 	}
 	
@@ -207,9 +221,7 @@ func renderSourceFileInputView(m Model) string {
 	content += "\n\n"
 	
 	// Note about being optional
-	content += "Note: This step is optional. If you don't have an existing resume file,"
-	content += "\n"
-	content += "just press Enter to continue without selecting a file."
+	content += wrap("Note: This step is optional. If you don't have an existing resume file, just press Enter to continue without selecting a file.", displayWidth-5)
 	content += "\n\n"
 	
 	// Keyboard shortcuts
@@ -224,21 +236,35 @@ func renderSourceFileInputView(m Model) string {
 func renderStdinInputView(m Model) string {
 	var content string
 	
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
+	// Calculate display width
+	displayWidth := m.width
+	if displayWidth > 80 {
+		displayWidth = 80 // Cap at 80 chars for readability
+	}
+	if displayWidth < 40 {
+		displayWidth = 40 // Minimum width
+	}
+	
 	// Title
 	content += titleStyle.Render("Resume Details")
 	content += "\n\n"
 	
 	// Instructions
-	content += subtitleStyle.Render("Tell us about your experience, skills, and qualifications.")
+	content += subtitleStyle.Render(wrap("Tell us about your experience, skills, and qualifications.", displayWidth-5))
 	content += "\n\n"
 	
 	// Show source file info if one was provided
 	if m.sourceContent != "" {
-		content += "Source file: " + successStyle.Render(m.sourcePathInput.Value())
+		content += "Source file: " + successStyle.Render(wrap(m.sourcePathInput.Value(), displayWidth-20))
 		content += "\n"
-		content += fmt.Sprintf("Content length: %d characters", len(m.sourceContent))
+		content += wrap(fmt.Sprintf("Content length: %d characters", len(m.sourceContent)), displayWidth-5)
 		content += "\n\n"
-		content += "We'll combine this source content with the details you provide below."
+		content += wrap("We'll combine this source content with the details you provide below.", displayWidth-5)
 		content += "\n\n"
 	}
 	
@@ -249,20 +275,20 @@ func renderStdinInputView(m Model) string {
 	// Tips and examples
 	content += tipStyle.Render("Tips:")
 	content += "\n"
-	content += tipStyle.Render("• Be specific about your achievements")
+	content += tipStyle.Render(wrap("• Be specific about your achievements", displayWidth-10))
 	content += "\n"
-	content += tipStyle.Render("• Include relevant skills and technologies")
+	content += tipStyle.Render(wrap("• Include relevant skills and technologies", displayWidth-10))
 	content += "\n"
-	content += tipStyle.Render("• Mention education, certifications, and years of experience")
+	content += tipStyle.Render(wrap("• Mention education, certifications, and years of experience", displayWidth-10))
 	content += "\n\n"
 	
 	content += exampleStyle.Render("Example:")
 	content += "\n"
-	content += exampleStyle.Render("I have 5 years of experience as a software developer.")
+	content += exampleStyle.Render(wrap("I have 5 years of experience as a software developer.", displayWidth-10))
 	content += "\n"
-	content += exampleStyle.Render("Skills: Go, Python, JavaScript, Docker, Kubernetes")
+	content += exampleStyle.Render(wrap("Skills: Go, Python, JavaScript, Docker, Kubernetes", displayWidth-10))
 	content += "\n"
-	content += exampleStyle.Render("Education: BS in Computer Science, University of Example")
+	content += exampleStyle.Render(wrap("Education: BS in Computer Science, University of Example", displayWidth-10))
 	content += "\n\n"
 	
 	// The actual textarea component
@@ -367,18 +393,32 @@ func renderGeneratingView(m Model) string {
 func renderSuccessView(m Model) string {
 	var content string
 	
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
+	// Calculate display width
+	displayWidth := m.width
+	if displayWidth > 80 {
+		displayWidth = 80 // Cap at 80 chars for readability
+	}
+	if displayWidth < 40 {
+		displayWidth = 40 // Minimum width
+	}
+	
 	// Title with success indicator
 	content += completedStyle.Render("✅ Success! Resume Generation Complete! ✅")
 	content += "\n\n"
 	
 	// Border for output path
-	content += "Your resume has been successfully generated and saved to:"
+	content += wrap("Your resume has been successfully generated and saved to:", displayWidth-5)
 	content += "\n"
-	content += pathStyle.Render(m.outputPath)
+	content += pathStyle.Render(wrap(m.outputPath, displayWidth-10))
 	content += "\n\n"
 	
 	// Show result information
-	content += fmt.Sprintf("Content length: %s characters", m.resultMessage)
+	content += wrap(fmt.Sprintf("Content length: %s characters", m.resultMessage), displayWidth-5)
 	content += "\n\n"
 	
 	// Next steps with a box
@@ -390,19 +430,19 @@ func renderSuccessView(m Model) string {
 	content += "\n\n"
 	
 	// Detailed next steps list
-	content += successStyle.Render("1. Review your resume at ") + m.outputPath
+	content += successStyle.Render("1. Review your resume at ") + wrap(m.outputPath, displayWidth-30)
 	content += "\n"
-	content += successStyle.Render("2. Make any necessary edits or refinements")
+	content += successStyle.Render(wrap("2. Make any necessary edits or refinements", displayWidth-5))
 	content += "\n"
-	content += successStyle.Render("3. Convert to other formats:")
+	content += successStyle.Render(wrap("3. Convert to other formats:", displayWidth-5))
 	content += "\n"
-	content += "   • PDF: Use a markdown converter like pandoc"
+	content += wrap("   • PDF: Use a markdown converter like pandoc", displayWidth-5)
 	content += "\n"
-	content += "   • DOCX: Use a markdown converter or import into your word processor"
+	content += wrap("   • DOCX: Use a markdown converter or import into your word processor", displayWidth-5)
 	content += "\n\n"
 	
 	// Congratulatory message
-	content += infoStyle.Render("Congratulations on creating your professional resume!")
+	content += infoStyle.Render(wrap("Congratulations on creating your professional resume!", displayWidth-5))
 	content += "\n\n"
 	
 	// Keyboard shortcuts
@@ -415,6 +455,20 @@ func renderSuccessView(m Model) string {
 func renderErrorView(m Model) string {
 	var content string
 	
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
+	// Calculate display width
+	displayWidth := m.width
+	if displayWidth > 80 {
+		displayWidth = 80 // Cap at 80 chars for readability
+	}
+	if displayWidth < 40 {
+		displayWidth = 40 // Minimum width
+	}
+	
 	// Title with error indicator
 	content += errorTitleStyle.Render("❌ ERROR: Resume Generation Failed ❌")
 	content += "\n\n"
@@ -422,7 +476,7 @@ func renderErrorView(m Model) string {
 	// Error message
 	content += "The following error occurred while generating your resume:"
 	content += "\n\n"
-	content += errorMsgStyle.Render(m.errorMsg)
+	content += errorMsgStyle.Render(wrap(m.errorMsg, displayWidth-5))
 	content += "\n\n"
 	
 	// Troubleshooting section
@@ -433,46 +487,44 @@ func renderErrorView(m Model) string {
 	if strings.Contains(strings.ToLower(m.errorMsg), "api") {
 		content += troubleshootStyle.Render("API-related issues:")
 		content += "\n"
-		content += "• Check your internet connection"
+		content += wrap("• Check your internet connection", displayWidth-5)
 		content += "\n"
-		content += "• Verify your GEMINI_API_KEY environment variable is set correctly"
+		content += wrap("• Verify your GEMINI_API_KEY environment variable is set correctly", displayWidth-5)
 		content += "\n"
-		content += "• Try again later as the API service might be temporarily unavailable"
+		content += wrap("• Try again later as the API service might be temporarily unavailable", displayWidth-5)
 		content += "\n"
-		content += "• Check the API usage quota in your Google Cloud Console"
+		content += wrap("• Check the API usage quota in your Google Cloud Console", displayWidth-5)
 	} else if strings.Contains(strings.ToLower(m.errorMsg), "file") {
 		content += troubleshootStyle.Render("File-related issues:")
 		content += "\n"
-		content += "• Check if the file exists at the specified path"
+		content += wrap("• Check if the file exists at the specified path", displayWidth-5)
 		content += "\n"
-		content += "• Verify you have read permissions for the file"
+		content += wrap("• Verify you have read permissions for the file", displayWidth-5)
 		content += "\n"
-		content += "• Try using an absolute path instead of a relative path"
+		content += wrap("• Try using an absolute path instead of a relative path", displayWidth-5)
 	} else {
 		content += troubleshootStyle.Render("General troubleshooting:")
 		content += "\n"
-		content += "• Try running the application again"
+		content += wrap("• Try running the application again", displayWidth-5)
 		content += "\n"
-		content += "• Check the application logs for more details"
+		content += wrap("• Check the application logs for more details", displayWidth-5)
 		content += "\n"
-		content += "• Verify you have sufficient disk space and memory"
+		content += wrap("• Verify you have sufficient disk space and memory", displayWidth-5)
 	}
 	
 	// What to try next
 	content += "\n\n"
 	content += infoStyle.Render("What to try next:")
 	content += "\n"
-	content += "1. Address the issue mentioned above"
+	content += wrap("1. Address the issue mentioned above", displayWidth-5)
 	content += "\n"
-	content += "2. Run the application again"
+	content += wrap("2. Run the application again", displayWidth-5)
 	content += "\n"
-	content += "3. If the problem persists, try with simplified input"
+	content += wrap("3. If the problem persists, try with simplified input", displayWidth-5)
 	content += "\n\n"
 	
 	// Additional help
-	content += "If you continue to experience issues, check the project documentation"
-	content += "\n"
-	content += "or report this problem in the GitHub repository."
+	content += wrap("If you continue to experience issues, check the project documentation or report this problem in the GitHub repository.", displayWidth-5)
 	content += "\n\n"
 	
 	// Keyboard shortcuts

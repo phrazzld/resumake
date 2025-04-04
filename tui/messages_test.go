@@ -97,36 +97,6 @@ func TestAPIResultMsg(t *testing.T) {
 	}
 }
 
-func TestAPIInitResultMsg(t *testing.T) {
-	// Test successful API initialization
-	successMsg := APIInitResultMsg{
-		Success: true,
-		Error:   nil,
-	}
-	
-	if !successMsg.Success {
-		t.Error("Expected Success to be true")
-	}
-	
-	if successMsg.Error != nil {
-		t.Errorf("Expected Error to be nil, got %v", successMsg.Error)
-	}
-	
-	// Test failed API initialization
-	testErr := errors.New("API key not set")
-	failMsg := APIInitResultMsg{
-		Success: false,
-		Error:   testErr,
-	}
-	
-	if failMsg.Success {
-		t.Error("Expected Success to be false")
-	}
-	
-	if failMsg.Error != testErr {
-		t.Errorf("Expected Error to be %v, got %v", testErr, failMsg.Error)
-	}
-}
 
 func TestStdinSubmitMsg(t *testing.T) {
 	msg := StdinSubmitMsg{

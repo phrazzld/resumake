@@ -1,9 +1,11 @@
 package tui
 
 import (
+	"fmt"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/google/generative-ai-go/genai"
 )
 
 
@@ -151,6 +153,63 @@ func TestExitHandlersCallCleanup(t *testing.T) {
 		})
 	}
 	
+	// Test cleanup after entering the error state due to file reading error
+	t.Run("File read error state cleanup", func(t *testing.T) {
+		// Create a counter to track if cleanup was called
+		cleanupCalled := 0
+		
+		// Override the cleanup function with our instrumented version
+		cleanupAPIClient = func(m Model) Model {
+			cleanupCalled++
+			return m
+		}
+		
+		// Create a model and directly set it to the error state
+		m := NewModel()
+		m.state = stateResultError
+		m.errorMsg = "Test error"
+		
+		// Send Enter key to exit from error state
+		_, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		
+		// Verify that cleanup was called
+		if cleanupCalled == 0 {
+			t.Error("Expected cleanupAPIClient to be called when exiting from error state")
+		}
+	})
+
+	// Test cleanup when transitioning to error state after API client was initialized
+	t.Run("API error after initialization", func(t *testing.T) {
+		// Create a counter to track if cleanup was called
+		cleanupCalled := 0
+		
+		// Override the cleanup function with our instrumented version
+		cleanupAPIClient = func(m Model) Model {
+			cleanupCalled++
+			return m
+		}
+		
+		// Create a model with initialized API client
+		m := NewModel()
+		// Manually set client (simulating successful initialization)
+		m.apiClient = &genai.Client{} // Mock client
+		
+		// Simulate an API error by sending API failure result
+		updatedModel, _ := m.Update(APIResultMsg{
+			Success: false,
+			Error:   fmt.Errorf("API request failed"),
+		})
+		// Now model should be in error state
+		
+		// Send Enter key to exit from error state
+		_, _ = updatedModel.(Model).Update(tea.KeyMsg{Type: tea.KeyEnter})
+		
+		// Verify that cleanup was called
+		if cleanupCalled == 0 {
+			t.Error("Expected cleanupAPIClient to be called when exiting after API error")
+		}
+	})
+
 	// Restore the original function
 	cleanupAPIClient = originalCleanupFunc
 }
