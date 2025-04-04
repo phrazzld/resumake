@@ -19,7 +19,7 @@
   - Priority: High
 
 ### Main Application Flow
-- [ ] Refactor main.go for TUI
+- [x] Refactor main.go for TUI
   - Description: Update main.go to initialize and run Bubble Tea program
   - Dependencies: TUI model design
   - Priority: High

@@ -63,6 +63,10 @@ type Model struct {
 	
 	// Styling
 	mainStyle     lipgloss.Style
+	
+	// Flag-provided values
+	flagSourcePath string
+	flagOutputPath string
 }
 
 // NewModel creates a new Model with default values.
@@ -94,6 +98,9 @@ func NewModel() Model {
 		stdinInput:     stdinTA,
 		spinner:        sp,
 		mainStyle:      lipgloss.NewStyle().Bold(true),
+		// Flag values will be populated with WithSourcePath/WithOutputPath
+		flagSourcePath: "",
+		flagOutputPath: "",
 	}
 }
 
@@ -123,8 +130,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateWelcome:
 			if msg.Type == tea.KeyEnter {
 				if m.apiKeyOk {
-					m.state = stateInputSourcePath
-					cmds = append(cmds, m.sourcePathInput.Focus())
+					// If a source path was provided via flags, we can pre-fill it
+					if m.flagSourcePath != "" {
+						// We'll still go to the input screen but with pre-filled value
+						m.state = stateInputSourcePath
+						cmds = append(cmds, m.sourcePathInput.Focus())
+					} else {
+						// Otherwise, prompt for source path
+						m.state = stateInputSourcePath
+						cmds = append(cmds, m.sourcePathInput.Focus())
+					}
 				} else {
 					m.state = stateResultError
 					m.errorMsg = "API key is missing or invalid. Set GEMINI_API_KEY environment variable."
@@ -159,6 +174,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case stateConfirmGenerate:
 			if msg.Type == tea.KeyEnter {
 				m.state = stateGenerating
+				
+				// Use provided output path from flags if available
+				if m.flagOutputPath != "" {
+					m.outputPath = m.flagOutputPath
+				}
 			} else if msg.Type == tea.KeyEsc {
 				m.state = stateInputStdin
 				cmds = append(cmds, m.stdinInput.Focus())
@@ -224,6 +244,12 @@ func (m Model) View() string {
 			content += "Source file: " + m.sourceContent + "\n"
 		}
 		content += "Input length: " + fmt.Sprintf("%d", len(m.stdinContent)) + " characters\n\n"
+		
+		// Show output path if it was provided via flags
+		if m.flagOutputPath != "" {
+			content += "Output will be written to: " + m.flagOutputPath + "\n\n"
+		}
+		
 		content += "Press Enter to confirm, Esc to go back."
 	
 	case stateGenerating:
@@ -258,4 +284,19 @@ func (m Model) View() string {
 func checkAPIKey() bool {
 	_, err := api.GetAPIKey()
 	return err == nil
+}
+
+// WithSourcePath returns a copy of the model with the source path set
+// Used when the source path is provided via command-line flags
+func (m Model) WithSourcePath(path string) Model {
+	m.flagSourcePath = path
+	m.sourcePathInput.SetValue(path)
+	return m
+}
+
+// WithOutputPath returns a copy of the model with the output path set
+// Used when the output path is provided via command-line flags
+func (m Model) WithOutputPath(path string) Model {
+	m.flagOutputPath = path
+	return m
 }
