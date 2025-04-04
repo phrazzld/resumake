@@ -9,120 +9,187 @@ import (
 
 // Styles for different elements
 var (
+	// Define a consistent color palette with better contrast
+	primaryColor   = lipgloss.Color("#2C8CFF") // Vibrant blue
+	secondaryColor = lipgloss.Color("#15B097") // Teal
+	accentColor    = lipgloss.Color("#F2C94C") // Gold
+	successColor   = lipgloss.Color("#27AE60") // Green
+	errorColor     = lipgloss.Color("#EB5757") // Red
+	subtleColor    = lipgloss.Color("#BDBDBD") // Light gray
+	neutralColor   = lipgloss.Color("#F2F2F2") // Off-white
+	darkColor      = lipgloss.Color("#333333") // Dark gray
+	
+	// Title styles - make more prominent
 	titleStyle = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("#0099FF")).
-		MarginBottom(1)
-	
-	subtitleStyle = lipgloss.NewStyle().
-		Italic(true).
-		Foreground(lipgloss.Color("#00CCFF"))
-	
-	successStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#00CC00"))
-	
-	errorStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FF0000"))
-	
-	infoStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFCC00"))
-	
-	keyboardHintStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#AAAAAA")).
-		Italic(true)
-		
-	inputLabelStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#FFFFFF"))
-		
-	flagValueStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFFFAA"))
-		
-	tipStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#88FF88")).
-		Italic(true)
-		
-	exampleStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#BBBBFF"))
-		
-	progressStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFAA44")).
-		Bold(true)
-		
-	stepStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#44AAFF")).
-		Bold(true)
-		
-	completedStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#33FF33"))
-		
-	pathStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#FFFFFF")).
-		Background(lipgloss.Color("#555555")).
-		Padding(0, 1)
-		
-	errorTitleStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#FFFFFF")).
-		Background(lipgloss.Color("#FF0000")).
+		Foreground(primaryColor).
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
 		Padding(0, 1).
 		MarginBottom(1)
-		
-	errorMsgStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FF5555")).
+	
+	// Subtitle with better contrast
+	subtitleStyle = lipgloss.NewStyle().
+		Italic(true).
+		Foreground(secondaryColor).
+		MarginBottom(1)
+	
+	// Status styles
+	successStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(successColor)
+	
+	errorStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(errorColor)
+	
+	infoStyle = lipgloss.NewStyle().
+		Foreground(accentColor).
 		Bold(true)
-		
+	
+	// Keyboard hints with better visibility
+	keyboardHintStyle = lipgloss.NewStyle().
+		Foreground(subtleColor).
+		Italic(true)
+	
+	// Input styles
+	inputLabelStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(primaryColor)
+	
+	flagValueStyle = lipgloss.NewStyle().
+		Foreground(accentColor).
+		Bold(true)
+	
+	// Help text styles
+	tipStyle = lipgloss.NewStyle().
+		Foreground(secondaryColor).
+		Italic(true)
+	
+	exampleStyle = lipgloss.NewStyle().
+		Foreground(primaryColor)
+	
+	// Progress styles
+	progressStyle = lipgloss.NewStyle().
+		Foreground(accentColor).
+		Bold(true)
+	
+	stepStyle = lipgloss.NewStyle().
+		Foreground(primaryColor).
+		Bold(true)
+	
+	completedStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(successColor)
+	
+	// Output path style
+	pathStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(neutralColor).
+		Background(darkColor).
+		Padding(0, 1)
+	
+	// Error styles
+	errorTitleStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(neutralColor).
+		Background(errorColor).
+		Padding(0, 1).
+		MarginBottom(1)
+	
+	errorMsgStyle = lipgloss.NewStyle().
+		Foreground(errorColor).
+		Bold(true)
+	
 	troubleshootStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#AACCFF"))
+		Foreground(primaryColor)
 )
 
 // renderWelcomeView generates the welcome screen content
 func renderWelcomeView(m Model) string {
 	var content string
 	
-	// Title
-	content += titleStyle.Render("╔═════════════════════════════════╗")
-	content += "\n"
-	content += titleStyle.Render("║       Welcome to Resumake!      ║")
-	content += "\n"
-	content += titleStyle.Render("╚═════════════════════════════════╝")
+	// Title - using prettier borders with proper styling
+	welcomeTitle := titleStyle.Copy().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
+		Padding(1, 3).
+		Render("Welcome to Resumake!")
+	
+	content += welcomeTitle
 	content += "\n\n"
 	
-	// Application description
-	content += subtitleStyle.Render("This tool helps you create a professional resume from your experience and qualifications.")
+	// Helper function to wrap text at a reasonable width
+	// This ensures text doesn't get truncated on narrow terminals
+	wrap := func(text string, width int) string {
+		if width <= 0 {
+			width = 80 // Default to 80 if we don't have width info
+		}
+		
+		// Simple word wrapping
+		words := strings.Fields(text)
+		if len(words) == 0 {
+			return ""
+		}
+		
+		result := words[0]
+		lineLen := len(words[0])
+		
+		for _, word := range words[1:] {
+			if lineLen+len(word)+1 > width {
+				result += "\n" + word
+				lineLen = len(word)
+			} else {
+				result += " " + word
+				lineLen += len(word) + 1
+			}
+		}
+		
+		return result
+	}
+	
+	// Application description - now with text wrapping
+	descWidth := m.width
+	if descWidth > 80 {
+		descWidth = 80 // Cap at 80 chars for readability
+	}
+	
+	description := "This tool helps you create a professional resume from your experience and qualifications."
+	content += subtitleStyle.Render(wrap(description, descWidth-5)) // -5 for margin
 	content += "\n\n"
 	
-	// How it works
-	content += "How it works:\n"
-	content += "1. Optionally provide an existing resume to enhance\n"
-	content += "2. Tell us about your experience, skills, and qualifications\n"
-	content += "3. We'll generate a polished resume in Markdown format\n\n"
+	// How it works section with better styling
+	content += stepStyle.Render("How it works:") + "\n"
+	content += "1. " + wrap("Optionally provide an existing resume to enhance", descWidth-5) + "\n"
+	content += "2. " + wrap("Tell us about your experience, skills, and qualifications", descWidth-5) + "\n"
+	content += "3. " + wrap("We'll generate a polished resume in Markdown format", descWidth-5) + "\n\n"
 	
-	// API key status
+	// API key status with better styling
 	if m.apiKeyOk {
 		content += successStyle.Render("✅ API key is valid and ready to use.")
 		content += "\n\n"
-		content += "You're all set to create your professional resume!"
+		content += wrap("You're all set to create your professional resume!", descWidth-5)
 	} else {
 		content += errorStyle.Render("❌ API key is missing or invalid.")
 		content += "\n\n"
-		content += "To use Resumake, you need to set the GEMINI_API_KEY environment variable:\n"
+		content += wrap("To use Resumake, you need to set the GEMINI_API_KEY environment variable:", descWidth-5) + "\n"
 		content += "  export GEMINI_API_KEY=your_api_key_here\n\n"
-		content += "You can get an API key from: https://makersuite.google.com/app/apikey\n"
-		content += errorStyle.Render("Note: Proceeding without a valid API key will result in errors.")
+		content += wrap("You can get an API key from: https://makersuite.google.com/app/apikey", descWidth-5) + "\n"
+		content += errorStyle.Render(wrap("Note: Proceeding without a valid API key will result in errors.", descWidth-5))
 	}
 	
-	// Keyboard shortcuts and instructions
+	// Keyboard shortcuts in a nice box
 	content += "\n\n"
-	content += keyboardHintStyle.Render("Keyboard shortcuts:")
-	content += "\n"
-	content += keyboardHintStyle.Render("• Enter: Continue to next step")
-	content += "\n"
-	content += keyboardHintStyle.Render("• Ctrl+C: Quit application")
-	content += "\n"
-	content += keyboardHintStyle.Render("• Esc: Go back (when available)")
+	shortcutsTitle := keyboardHintStyle.Copy().Bold(true).Render("Keyboard shortcuts:")
+	shortcuts := "• Enter: Continue to next step\n• Ctrl+C: Quit application\n• Esc: Go back (when available)"
+	
+	shortcutsBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(subtleColor).
+		Padding(1, 2).
+		Render(shortcutsTitle + "\n" + shortcuts)
+		
+	content += shortcutsBox
 	content += "\n\n"
 	
 	// Call to action

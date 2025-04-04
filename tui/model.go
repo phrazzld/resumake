@@ -246,10 +246,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		
-		// Update component dimensions
-		m.sourcePathInput.Width = msg.Width - 20
-		m.stdinInput.SetWidth(msg.Width - 20)
-		m.stdinInput.SetHeight(msg.Height - 10)
+		// Update component dimensions with minimum widths to prevent text truncation
+		inputWidth := msg.Width - 20
+		if inputWidth < 60 {
+			inputWidth = 60
+		}
+		
+		textareaHeight := msg.Height - 10
+		if textareaHeight < 10 {
+			textareaHeight = 10
+		}
+		
+		m.sourcePathInput.Width = inputWidth
+		m.stdinInput.SetWidth(inputWidth)
+		m.stdinInput.SetHeight(textareaHeight)
 	}
 	
 	// If no commands were queued from above, don't include spinner.Tick
