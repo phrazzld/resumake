@@ -21,7 +21,7 @@
   - Dependencies: Added API client fields
   - Priority: Medium
 
-- [ ] Update tests affected by API client changes
+- [x] Update tests affected by API client changes
   - Description: Modify tests to account for the new API client initialization approach
   - Dependencies: All API client refactoring complete
   - Priority: Medium

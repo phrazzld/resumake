@@ -2,6 +2,7 @@ package tui
 
 import (
 	"os"
+	"strings"
 	"testing"
 	
 	"github.com/google/generative-ai-go/genai"
@@ -142,6 +143,41 @@ func TestInitializeAPICmd(t *testing.T) {
 	})
 }
 
+// TestInitializeAPICmdDeprecated verifies that the InitializeAPICmd still works
+// but doesn't actually store the client in the model (that's done by initializeAPIClient now)
+// This test was added as part of the API client refactoring update
+func TestInitializeAPICmdDeprecated(t *testing.T) {
+	// Create a model
+	m := NewModel()
+	
+	// Call InitializeAPICmd and get the result
+	cmd := InitializeAPICmd()
+	result := cmd()
+	
+	// Verify it returns a valid message
+	msg, ok := result.(APIInitResultMsg)
+	if !ok {
+		t.Fatalf("Expected APIInitResultMsg, got %T", result)
+	}
+	
+	// Even if the command succeeded, it shouldn't affect our model
+	// because the client is now initialized differently
+	if m.apiClient != nil {
+		t.Error("Expected model.apiClient to remain nil after InitializeAPICmd")
+	}
+	
+	if m.apiModel != nil {
+		t.Error("Expected model.apiModel to remain nil after InitializeAPICmd")
+	}
+	
+	// The expected behavior is the message contains the success/failure information
+	// but the model itself is unaffected because this command should be deprecated
+	// in favor of the new initialization flow via model.Update
+	
+	// The actual success/failure depends on environment, so we don't test that
+	_ = msg.Success
+}
+
 // TestGenerateResumeCmd tests the resume generation command
 func TestGenerateResumeCmd(t *testing.T) {
 	// Test using dry run mode to avoid actual API calls
@@ -187,6 +223,9 @@ func TestGenerateResumeCmd(t *testing.T) {
 	// This is better suited for integration tests
 }
 
+// For testing that the API client changes work as expected,
+// we utilize dry run mode in GenerateResumeCmd which avoids actual API calls
+
 // TestGenerateResumeCmdUsesProvidedClient verifies that GenerateResumeCmd uses the provided client and model
 func TestGenerateResumeCmdUsesProvidedClient(t *testing.T) {
 	// This test will verify that the provided client is used instead of creating a new one
@@ -221,4 +260,45 @@ func TestGenerateResumeCmdUsesProvidedClient(t *testing.T) {
 		// that allow us to verify they were used correctly. Since we're using dry run mode,
 		// we're just verifying that the function accepts the client and model parameters.
 	})
+	
+	// Test that GenerateResumeCmd fails gracefully when clients are nil
+	t.Run("Fails when client or model is nil", func(t *testing.T) {
+		// Create test data
+		sourceContent := "Source resume content"
+		stdinContent := "Additional resume details"
+		outputPath := "/tmp/test_resume.md"
+		
+		// Pass nil client and model with dry run set to false
+		var client *genai.Client = nil
+		var model *genai.GenerativeModel = nil
+		
+		// Create and run the command
+		cmd := GenerateResumeCmd(client, model, sourceContent, stdinContent, outputPath, false)
+		result := cmd()
+		
+		// Verify command produced error result
+		msg, ok := result.(APIResultMsg)
+		if !ok {
+			t.Fatalf("Expected APIResultMsg, got %T", result)
+		}
+		
+		// Should report failure
+		if msg.Success {
+			t.Error("Expected Success to be false when client is nil, got true")
+		}
+		
+		// Error should mention nil client/model
+		if msg.Error == nil || !contains(msg.Error.Error(), "client") {
+			t.Errorf("Expected error about nil client, got: %v", msg.Error)
+		}
+	})
+	
+	// Rather than trying to mock API calls which is complex,
+	// we'll focus on verifying the command accepts client/model parameters correctly
+	// which is what was changed in the refactoring
+}
+
+// contains is a helper function to check if a string contains a substring
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
 }

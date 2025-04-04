@@ -8,6 +8,7 @@ import (
 
 
 // TestAPIClientInitialization ensures the API client is initialized only once and at the right moment
+// This test was updated after the API client refactoring to verify the new initialization approach
 func TestAPIClientInitialization(t *testing.T) {
 	// Test 1: API client is nil on initial model creation
 	t.Run("API client is nil on model creation", func(t *testing.T) {
@@ -43,9 +44,37 @@ func TestAPIClientInitialization(t *testing.T) {
 	})
 	
 	// Test 3: Client is not re-initialized on subsequent state transitions
+	// This test was added as part of the API client refactoring update
 	t.Run("API client is initialized only once", func(t *testing.T) {
-		// This test will be implemented after basic initialization works
-		// The test will need to capture the client instance and ensure it doesn't change
+		// Create a model with valid API key
+		m := NewModel()
+		m.apiKeyOk = true // Simulate valid API key
+		
+		// Transition from welcome to sourceInput state to initialize the client
+		updatedModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		model := updatedModel.(Model)
+		
+		// Save the client instance pointer
+		originalClient := model.apiClient
+		originalModel := model.apiModel
+		
+		if originalClient == nil {
+			t.Fatal("Expected apiClient to be initialized, but it was nil")
+		}
+		
+		// Transition to next state (stdinInput)
+		model.state = stateInputSourcePath // Make sure we're in the right state first
+		nextModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		modelAfterTransition := nextModel.(Model)
+		
+		// Verify client instance is the same (not re-initialized)
+		if modelAfterTransition.apiClient != originalClient {
+			t.Error("Expected apiClient to remain the same instance after state transition")
+		}
+		
+		if modelAfterTransition.apiModel != originalModel {
+			t.Error("Expected apiModel to remain the same instance after state transition")
+		}
 	})
 }
 
