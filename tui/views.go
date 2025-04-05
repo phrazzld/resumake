@@ -379,29 +379,92 @@ func renderStdinInputView(m Model) string {
 
 // renderConfirmGenerateView generates the confirmation view before generating
 func renderConfirmGenerateView(m Model) string {
-	// Calculate display width (unused in this view currently)
-	_ = getConstrainedWidth(m.width)
+	// Calculate display width
+	displayWidth := getConstrainedWidth(m.width)
 	
-	// Create a title with high contrast
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
+	// Create a centered title with high contrast
 	title := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(highlightColor).
 		Background(accentColor).
 		Padding(1).
-		Render(" Ready to Generate Resume ")
+		Width(displayWidth - 4).
+		Align(lipgloss.Center).
+		Render("🚀 Ready to Generate Resume")
 	
-	// Show info
-	info := "Press Enter to confirm and generate your resume"
+	// Create a summary section
+	summaryTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("Summary of Input")
+	
+	// Build summary content
+	var summaryContent strings.Builder
+	
+	// Add source file info if provided
 	if m.sourceContent != "" {
-		info = fmt.Sprintf("Source file: %s\n%s", m.sourcePathInput.Value(), info)
+		sourceInfo := fmt.Sprintf("📄 Source file: %s", m.sourcePathInput.Value())
+		summaryContent.WriteString(wrap(sourceInfo, displayWidth - 16) + "\n\n")
 	}
 	
-	// Compose the view
+	// Add input content summary (truncated)
+	inputLength := len(m.stdinContent)
+	if inputLength > 0 {
+		var contentPreview string
+		if inputLength > 100 {
+			contentPreview = m.stdinContent[:97] + "..."
+		} else {
+			contentPreview = m.stdinContent
+		}
+		
+		contentInfo := fmt.Sprintf("✏️ Input: %d characters\n\n", inputLength)
+		summaryContent.WriteString(contentInfo)
+		summaryContent.WriteString(wrap("Preview: "+contentPreview, displayWidth - 16))
+	}
+	
+	// Add output path info if provided via flags
+	if m.flagOutputPath != "" {
+		outputInfo := fmt.Sprintf("\n\n📁 Output path: %s", m.flagOutputPath)
+		summaryContent.WriteString(wrap(outputInfo, displayWidth - 16))
+	}
+	
+	// Build the summary box
+	summaryBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
+		Padding(1, 2).
+		Width(displayWidth - 4).
+		Render(lipgloss.JoinVertical(
+			lipgloss.Left,
+			summaryTitle,
+			"",
+			summaryContent.String(),
+		))
+	
+	// Add confirmatation instruction
+	instruction := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(accentColor).
+		Render("Press Enter to confirm and generate your resume")
+	
+	// Add hint about ESC
+	hint := italicStyle.Render("Press ESC to go back and edit your input")
+	
+	// Compose the complete view
 	return lipgloss.JoinVertical(
-		lipgloss.Left,
+		lipgloss.Center,
 		title,
 		"",
-		lipgloss.NewStyle().Bold(true).Render(info),
+		summaryBox,
+		"",
+		instruction,
+		"",
+		hint,
 	)
 }
 
