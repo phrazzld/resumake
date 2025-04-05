@@ -22,6 +22,10 @@ var (
 	textColor      = lipgloss.AdaptiveColor{Light: "#222222", Dark: "#E8E8E8"} // Main text color
 	bgAccentColor  = lipgloss.AdaptiveColor{Light: "#E8E8E8", Dark: "#333333"} // Slight contrast from background
 	highlightColor = lipgloss.AdaptiveColor{Light: "#000000", Dark: "#FFFFFF"} // Maximum contrast
+	
+	// Focus colors
+	focusBgColor   = lipgloss.AdaptiveColor{Light: "#E6F0FF", Dark: "#1A2645"} // Subtle background for focused elements
+	focusBorderColor = lipgloss.AdaptiveColor{Light: "#4C8FFF", Dark: "#7FAAFF"} // Brighter border for focused elements
 )
 
 // Base styles to be composed into more complex styles
@@ -118,6 +122,40 @@ func StyledTitle(title string, withBorder bool, align lipgloss.Position) string 
 func StyledSection(title string, content string, boxStyle lipgloss.Style) string {
 	titleText := lipgloss.NewStyle().Bold(true).Foreground(primaryColor).Render(title)
 	return boxStyle.Render(titleText + "\n\n" + content)
+}
+
+// FocusedStyle applies focus styling to the provided content
+// This creates a visually distinct container for focused elements
+func FocusedStyle(content string, width int) string {
+	return lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(focusBorderColor).
+		Background(focusBgColor).
+		Padding(0, 1).
+		Width(width).
+		Render(content)
+}
+
+// UnfocusedStyle applies unfocused styling to the provided content
+// This creates a neutral container that doesn't draw attention
+func UnfocusedStyle(content string, width int) string {
+	return lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(subtleColor).
+		Padding(0, 1).
+		Width(width).
+		Render(content)
+}
+
+// FocusedInputLabel creates a label that indicates focus state
+func FocusedInputLabel(focused bool) string {
+	if focused {
+		return lipgloss.NewStyle().
+			Bold(true).
+			Foreground(primaryColor).
+			Render("✓ FOCUSED")
+	}
+	return ""
 }
 
 // LogoText returns a stylized text-based logo for the application

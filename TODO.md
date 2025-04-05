@@ -36,7 +36,7 @@
   - Description: Ensure wrapText is applied uniformly across all views
   - Dependencies: None
   - Priority: Medium
-- [ ] Add subtle feedback on input focus
+- [x] Add subtle feedback on input focus
   - Description: Use lipgloss styles to indicate focused input field
   - Dependencies: Consistent styles
   - Priority: Medium

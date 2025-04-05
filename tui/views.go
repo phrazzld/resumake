@@ -152,13 +152,21 @@ func renderSourceFileInputView(m Model) string {
 		instructionsContent += "\n\n" + flagInfo
 	}
 	
-	// Display the input field with custom styling to make it more prominent
-	styledInputView := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(primaryColor).
-		Padding(0, 1).
-		Width(displayWidth - 8).
-		Render(m.sourcePathInput.View())
+	// Display the input field with focus-aware styling
+	inputContent := m.sourcePathInput.View()
+	var styledInputView string
+	
+	// Apply different styling based on focus state
+	if m.sourcePathInput.Focused() {
+		// Add focus indicator
+		focusLabel := FocusedInputLabel(true)
+		if focusLabel != "" {
+			inputContent = focusLabel + "\n" + inputContent
+		}
+		styledInputView = FocusedStyle(inputContent, displayWidth - 8)
+	} else {
+		styledInputView = UnfocusedStyle(inputContent, displayWidth - 8)
+	}
 	
 	// Create a helpful tips section
 	tipsTitle := lipgloss.NewStyle().
@@ -268,12 +276,24 @@ func renderStdinInputView(m Model) string {
 		"professional experience and skills. The AI will structure and enhance this information.",
 		displayWidth - 16)
 	
-	// Style for the textarea container to make it more prominent
-	textareaContainer := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(primaryColor).
-		Padding(0, 1).
-		Width(displayWidth - 8)
+	// Style for the textarea container with focus-aware styling
+	textareaContent := m.stdinInput.View()
+	var styledTextareaView string
+	
+	// Apply different styling based on focus state
+	if m.stdinInput.Focused() {
+		// Add focus indicator
+		focusLabel := FocusedInputLabel(true)
+		if focusLabel != "" {
+			focusLabelStyle := lipgloss.NewStyle().
+				Padding(1, 0)
+			styledTextareaView = FocusedStyle(focusLabelStyle.Render(focusLabel) + "\n" + textareaContent, displayWidth - 8)
+		} else {
+			styledTextareaView = FocusedStyle(textareaContent, displayWidth - 8)
+		}
+	} else {
+		styledTextareaView = UnfocusedStyle(textareaContent, displayWidth - 8)
+	}
 	
 	// Create a suggestions section
 	suggestionsTitle := lipgloss.NewStyle().
@@ -328,8 +348,8 @@ func renderStdinInputView(m Model) string {
 		"",
 		instructionsContent,
 		"",
-		// Add the text area view with styling
-		textareaContainer.Render(m.stdinInput.View()),
+		// Add the text area view with focus-aware styling
+		styledTextareaView,
 		"",
 		shortcutsTitle,
 		"",
