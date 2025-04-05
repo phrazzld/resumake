@@ -6,6 +6,18 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// Helper function to constrain display width within reasonable bounds
+func getConstrainedWidth(width int) int {
+	// Set reasonable bounds for the width
+	if width > 100 {
+		width = 100 // Cap at 100 chars for readability
+	}
+	if width < 40 {
+		width = 40 // Minimum width
+	}
+	return width
+}
+
 // renderWelcomeView generates the welcome screen content
 func renderWelcomeView(m Model) string {
 	// Use the shared wrapText utility for consistent text wrapping
@@ -14,13 +26,7 @@ func renderWelcomeView(m Model) string {
 	}
 	
 	// Calculate display width
-	displayWidth := m.width
-	if displayWidth > 100 {
-		displayWidth = 100 // Cap at 100 chars for readability
-	}
-	if displayWidth < 80 {
-		displayWidth = 80 // Minimum width for the logo
-	}
+	displayWidth := getConstrainedWidth(m.width)
 	
 	// Container for our welcome screen
 	docStyle := lipgloss.NewStyle().
@@ -29,8 +35,9 @@ func renderWelcomeView(m Model) string {
 	// Logo text
 	logo := LogoText()
 	
-	// Use existing styles with higher contrast
-	titleText := boldStyle.Copy().
+	// Use inline styles with higher contrast
+	titleText := lipgloss.NewStyle().
+		Bold(true).
 		Foreground(primaryColor).
 		Background(bgAccentColor).
 		Padding(1).
@@ -64,7 +71,7 @@ func renderWelcomeView(m Model) string {
 		Render(apiStatus)
 		
 	// Steps section
-	stepsText := boldStyle.Render("How it works:") + "\n\n" +
+	stepsText := lipgloss.NewStyle().Bold(true).Render("How it works:") + "\n\n" +
 		"1. " + wrap("Optionally provide an existing resume to enhance", displayWidth-20) + "\n\n" +
 		"2. " + wrap("Tell us about your experience and skills", displayWidth-20) + "\n\n" +
 		"3. " + wrap("Get your polished resume in markdown format", displayWidth-20)
@@ -77,7 +84,8 @@ func renderWelcomeView(m Model) string {
 		Render(stepsText)
 	
 	// Call to action
-	callToAction := boldStyle.Copy().
+	callToAction := lipgloss.NewStyle().
+		Bold(true).
 		Foreground(highlightColor).
 		Background(accentColor).
 		Padding(1).
@@ -102,24 +110,19 @@ func renderWelcomeView(m Model) string {
 
 // renderSourceFileInputView generates the source file input view content
 func renderSourceFileInputView(m Model) string {
-	// Calculate display width
-	displayWidth := m.width
-	if displayWidth > 80 {
-		displayWidth = 80 // Cap at 80 chars for readability
-	}
-	if displayWidth < 40 {
-		displayWidth = 40 // Minimum width
-	}
+	// Calculate display width (unused in this view currently)
+	_ = getConstrainedWidth(m.width)
 	
 	// Create a title with high contrast
-	title := boldStyle.Copy().
+	title := lipgloss.NewStyle().
+		Bold(true).
 		Foreground(highlightColor).
 		Background(primaryColor).
 		Padding(1).
 		Render(" Source File Input ")
 	
 	// Create instructions with good contrast
-	instructions := boldStyle.Render("Enter path to existing resume file (optional):")
+	instructions := lipgloss.NewStyle().Bold(true).Render("Enter path to existing resume file (optional):")
 	
 	// Add text input view
 	inputView := m.sourcePathInput.View()
@@ -142,24 +145,19 @@ func renderSourceFileInputView(m Model) string {
 
 // renderStdinInputView generates the stdin input view content
 func renderStdinInputView(m Model) string {
-	// Calculate display width
-	displayWidth := m.width
-	if displayWidth > 80 {
-		displayWidth = 80 // Cap at 80 chars for readability
-	}
-	if displayWidth < 40 {
-		displayWidth = 40 // Minimum width
-	}
+	// Calculate display width (unused in this view currently)
+	_ = getConstrainedWidth(m.width)
 	
 	// Create a title with high contrast
-	title := boldStyle.Copy().
+	title := lipgloss.NewStyle().
+		Bold(true).
 		Foreground(highlightColor).
 		Background(primaryColor).
 		Padding(1).
 		Render(" Enter Resume Details ")
 	
 	// Instructions
-	instructions := boldStyle.Render("Tell us about your experience, skills, and qualifications:")
+	instructions := lipgloss.NewStyle().Bold(true).Render("Tell us about your experience, skills, and qualifications:")
 	
 	// Add the text area view
 	textareaView := m.stdinInput.View()
@@ -182,17 +180,12 @@ func renderStdinInputView(m Model) string {
 
 // renderConfirmGenerateView generates the confirmation view before generating
 func renderConfirmGenerateView(m Model) string {
-	// Calculate display width
-	displayWidth := m.width
-	if displayWidth > 80 {
-		displayWidth = 80 // Cap at 80 chars for readability
-	}
-	if displayWidth < 40 {
-		displayWidth = 40 // Minimum width
-	}
+	// Calculate display width (unused in this view currently)
+	_ = getConstrainedWidth(m.width)
 	
 	// Create a title with high contrast
-	title := boldStyle.Copy().
+	title := lipgloss.NewStyle().
+		Bold(true).
 		Foreground(highlightColor).
 		Background(accentColor).
 		Padding(1).
@@ -209,7 +202,7 @@ func renderConfirmGenerateView(m Model) string {
 		lipgloss.Left,
 		title,
 		"",
-		boldStyle.Render(info),
+		lipgloss.NewStyle().Bold(true).Render(info),
 	)
 }
 
@@ -221,16 +214,11 @@ func renderGeneratingView(m Model) string {
 	}
 	
 	// Calculate display width
-	displayWidth := m.width
-	if displayWidth > 80 {
-		displayWidth = 80 // Cap at 80 chars for readability
-	}
-	if displayWidth < 40 {
-		displayWidth = 40 // Minimum width
-	}
+	displayWidth := getConstrainedWidth(m.width)
 	
 	// Create a title with high contrast
-	title := boldStyle.Copy().
+	title := lipgloss.NewStyle().
+		Bold(true).
 		Foreground(highlightColor).
 		Background(primaryColor).
 		Padding(1).
@@ -242,7 +230,7 @@ func renderGeneratingView(m Model) string {
 	totalChars := len(m.stdinContent) + len(m.sourceContent)
 	
 	// Create a spinner with enhanced style
-	spinnerStyle := progressStyle.Copy().Bold(true)
+	spinnerStyle := lipgloss.NewStyle().Bold(true).Foreground(accentColor)
 	spinnerIcon := spinnerStyle.Render(m.spinner.View())
 	
 	// Create a progress indicator
@@ -250,7 +238,8 @@ func renderGeneratingView(m Model) string {
 	
 	if m.progressStep != "" && m.progressMsg != "" {
 		// Show specific progress steps when available
-		stepTitle := boldStyle.Copy().
+		stepTitle := lipgloss.NewStyle().
+			Bold(true).
 			Foreground(highlightColor).
 			Background(accentColor).
 			Padding(0, 1).
@@ -266,18 +255,18 @@ func renderGeneratingView(m Model) string {
 		)
 		
 		// Put it in a nice box
-		progressIndicator = secondaryBoxStyle.Copy().
+		progressIndicator = secondaryBoxStyle.
 			Width(displayWidth - 6).
 			Render(progressIndicator)
 	} else {
 		// Default message when no specific progress is available
-		progressIndicator = spinnerIcon + " " + boldStyle.Render("Processing your information...")
+		progressIndicator = spinnerIcon + " " + lipgloss.NewStyle().Bold(true).Render("Processing your information...")
 	}
 	
 	// Display input information
 	inputInfo := lipgloss.JoinVertical(
 		lipgloss.Left,
-		boldStyle.Render(fmt.Sprintf("Processing %d characters of input", totalChars)),
+		lipgloss.NewStyle().Bold(true).Render(fmt.Sprintf("Processing %d characters of input", totalChars)),
 	)
 	
 	// Show source file info if provided
@@ -292,7 +281,7 @@ func renderGeneratingView(m Model) string {
 	}
 	
 	// Create a styled input info box
-	inputInfoBox := primaryBoxStyle.Copy().
+	inputInfoBox := primaryBoxStyle.
 		Width(displayWidth - 6).
 		Render(inputInfo)
 	
@@ -308,7 +297,7 @@ func renderGeneratingView(m Model) string {
 	)
 	
 	// Create a styled process info box
-	processInfoBox := accentBoxStyle.Copy().
+	processInfoBox := accentBoxStyle.
 		Width(displayWidth - 6).
 		Render(processInfo)
 	
@@ -329,17 +318,12 @@ func renderGeneratingView(m Model) string {
 
 // renderSuccessView generates the success view
 func renderSuccessView(m Model) string {
-	// Calculate display width
-	displayWidth := m.width
-	if displayWidth > 80 {
-		displayWidth = 80 // Cap at 80 chars for readability
-	}
-	if displayWidth < 40 {
-		displayWidth = 40 // Minimum width
-	}
+	// Calculate display width (unused in this view currently)
+	_ = getConstrainedWidth(m.width)
 	
 	// Create a title with high contrast
-	title := boldStyle.Copy().
+	title := lipgloss.NewStyle().
+		Bold(true).
 		Foreground(highlightColor).
 		Background(successColor).
 		Padding(1).
@@ -355,7 +339,7 @@ func renderSuccessView(m Model) string {
 		"",
 		successStyle.Render("✓ Resume successfully generated!"),
 		"",
-		boldStyle.Render(outputInfo),
+		lipgloss.NewStyle().Bold(true).Render(outputInfo),
 		"",
 		italicStyle.Render("Press Enter to quit"),
 	)
@@ -363,17 +347,12 @@ func renderSuccessView(m Model) string {
 
 // renderErrorView generates the error view
 func renderErrorView(m Model) string {
-	// Calculate display width
-	displayWidth := m.width
-	if displayWidth > 80 {
-		displayWidth = 80 // Cap at 80 chars for readability
-	}
-	if displayWidth < 40 {
-		displayWidth = 40 // Minimum width
-	}
+	// Calculate display width (unused in this view currently)
+	_ = getConstrainedWidth(m.width)
 	
 	// Create a title with high contrast
-	title := boldStyle.Copy().
+	title := lipgloss.NewStyle().
+		Bold(true).
 		Foreground(highlightColor).
 		Background(errorColor).
 		Padding(1).

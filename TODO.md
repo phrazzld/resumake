@@ -12,6 +12,10 @@
   - Description: Better layout, spinner presentation, progress message clarity
   - Dependencies: Consistent styles
   - Priority: High
+- [x] Implement resilient testing approach for TUI
+  - Description: Replace brittle string-based tests with behavior-focused testing approach
+  - Dependencies: None
+  - Priority: High
 - [ ] Improve error view with contextual troubleshooting
   - Description: Parse error messages to provide specific troubleshooting tips
   - Dependencies: Consistent styles

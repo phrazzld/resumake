@@ -16,7 +16,6 @@ var (
 	// Semantic colors with high contrast
 	successColor   = lipgloss.AdaptiveColor{Light: "#1E6B38", Dark: "#4AE583"} // Green with good contrast in both modes
 	errorColor     = lipgloss.AdaptiveColor{Light: "#AE1F3D", Dark: "#FF6B80"} // Red with good contrast in both modes
-	warningColor   = lipgloss.AdaptiveColor{Light: "#AD5700", Dark: "#FFAD42"} // Orange with good contrast in both modes
 	
 	// Neutral colors for text and backgrounds
 	subtleColor    = lipgloss.AdaptiveColor{Light: "#777777", Dark: "#AAAAAA"} // Gray for subtle elements
@@ -27,105 +26,50 @@ var (
 
 // Base styles to be composed into more complex styles
 var (
-	// Base text styles
-	baseStyle = lipgloss.NewStyle().
-		Foreground(textColor)
-	
-	boldStyle = baseStyle.Copy().
-		Bold(true)
-	
-	italicStyle = baseStyle.Copy().
+	// Italic text style
+	italicStyle = lipgloss.NewStyle().
+		Foreground(textColor).
 		Italic(true)
-	
-	// High contrast style for important elements
-	highlightStyle = boldStyle.Copy().
-		Foreground(highlightColor)
-		
-	// Text on contrasting background for maximum readability
-	contrastBoxStyle = boldStyle.Copy().
-		Foreground(highlightColor).
-		Background(primaryColor).
-		Padding(0, 2)
 )
 
 // UI element styles
 var (
 	// Title styles
-	titleStyle = boldStyle.Copy().
+	titleStyle = lipgloss.NewStyle().
+		Bold(true).
 		Foreground(primaryColor).
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(primaryColor).
 		Padding(0, 1).
 		MarginBottom(1)
 	
-	subtitleStyle = italicStyle.Copy().
-		Foreground(secondaryColor).
-		MarginBottom(1)
-	
 	// Status styles
-	successStyle = boldStyle.Copy().
+	successStyle = lipgloss.NewStyle().
+		Bold(true).
 		Foreground(successColor)
 	
-	errorStyle = boldStyle.Copy().
+	errorStyle = lipgloss.NewStyle().
+		Bold(true).
 		Foreground(errorColor)
 	
-	warningStyle = boldStyle.Copy().
-		Foreground(warningColor)
-	
-	infoStyle = boldStyle.Copy().
-		Foreground(accentColor)
-	
 	// Keyboard hints
-	keyboardHintStyle = italicStyle.Copy().
+	keyboardHintStyle = lipgloss.NewStyle().
+		Italic(true).
 		Foreground(subtleColor)
 	
-	// Input styles
-	inputLabelStyle = boldStyle.Copy().
-		Foreground(primaryColor)
-	
-	inputFocusStyle = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(accentColor).
-		Padding(0, 1)
-	
-	flagValueStyle = boldStyle.Copy().
-		Foreground(accentColor)
-	
 	// Help text styles
-	tipStyle = italicStyle.Copy().
+	tipStyle = lipgloss.NewStyle().
+		Italic(true).
 		Foreground(secondaryColor)
 	
-	exampleStyle = baseStyle.Copy().
-		Foreground(primaryColor)
-	
-	// Progress styles
-	progressStyle = boldStyle.Copy().
-		Foreground(accentColor)
-	
-	stepStyle = boldStyle.Copy().
-		Foreground(primaryColor)
-	
-	completedStyle = boldStyle.Copy().
-		Foreground(successColor)
+	// (Progress styles are defined inline in views.go)
 	
 	// Output path style - high contrast for important paths
-	pathStyle = boldStyle.Copy().
+	pathStyle = lipgloss.NewStyle().
+		Bold(true).
 		Foreground(textColor).
 		Background(bgAccentColor).
 		Padding(0, 1)
-	
-	// Error styles
-	errorTitleStyle = boldStyle.Copy().
-		Foreground(highlightColor).
-		Background(errorColor).
-		Padding(0, 1).
-		MarginBottom(1)
-	
-	errorMsgStyle = boldStyle.Copy().
-		Foreground(errorColor)
-	
-	troubleshootStyle = boldStyle.Copy().
-		Foreground(primaryColor)
 )
 
 // Box styles for consistent containers
@@ -150,27 +94,13 @@ var (
 		BorderForeground(accentColor).
 		Padding(1, 2).
 		BorderBackground(bgAccentColor)
-	
-	// Error box - for error messages
-	errorBoxStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(errorColor).
-		Padding(1, 2).
-		BorderBackground(bgAccentColor)
-	
-	// Success box - for success messages
-	successBoxStyle = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(successColor).
-		Padding(1, 2).
-		BorderBackground(bgAccentColor)
 )
 
 // Utility functions for styled content
 
 // StyledTitle creates a consistently styled title with optional border and alignment
 func StyledTitle(title string, withBorder bool, align lipgloss.Position) string {
-	style := titleStyle.Copy()
+	style := titleStyle
 	
 	if withBorder {
 		style = style.
@@ -186,7 +116,7 @@ func StyledTitle(title string, withBorder bool, align lipgloss.Position) string 
 
 // StyledSection creates a box with a title and content
 func StyledSection(title string, content string, boxStyle lipgloss.Style) string {
-	titleText := boldStyle.Copy().Foreground(primaryColor).Render(title)
+	titleText := lipgloss.NewStyle().Bold(true).Foreground(primaryColor).Render(title)
 	return boxStyle.Render(titleText + "\n\n" + content)
 }
 
@@ -219,10 +149,9 @@ func VersionInfo(version string) string {
 func KeyboardShortcuts(shortcuts map[string]string) string {
 	var lines []string
 	for key, description := range shortcuts {
-		lines = append(lines, boldStyle.Render(key+": ")+description)
+		lines = append(lines, lipgloss.NewStyle().Bold(true).Render(key+": ")+description)
 	}
 	
-	return keyboardHintStyle.Copy().
-		Bold(false).
+	return keyboardHintStyle.
 		Render(strings.Join(lines, "\n"))
 }

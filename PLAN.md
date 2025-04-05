@@ -1,207 +1,278 @@
-# PLAN.md: Address Code Review Issues for TUI Implementation
+```markdown
+# Technical Plan: TUI Testing Overhaul
 
 ## 1. Overview
 
-This plan outlines the technical steps required to address the key issues identified in the `CODE_REVIEW.md` document for the `resumake` TUI implementation. The goal is to improve the application's robustness, maintainability, user experience, and resource management by resolving API client redundancy, code duplication, unclear error messages, terminal compatibility concerns, spinner animation inconsistency, incomplete signal handling, and missing cleanup calls on exit.
+This plan outlines the strategy to overhaul the Terminal User Interface (TUI) testing for the Resumake Go application. The current tests, particularly those interacting with the Bubble Tea `Model`'s `View()` method, rely heavily on `strings.Contains` checks against rendered output. This makes them brittle and prone to breaking with minor UI text or styling changes.
+
+The goal is to shift towards a more resilient testing approach that focuses on:
+
+1.  **Behavior:** Verifying state transitions, command emissions, and data flow within the TUI model in response to user inputs and events.
+2.  **Structure:** Asserting the presence and state of key UI elements (like input fields, spinners, error messages) based on the model's state, rather than checking exact rendered text.
+
+This will involve refactoring existing TUI tests (`tui/*_test.go`) and potentially introducing helper methods on the `tui.Model` to facilitate these structural assertions.
 
 ## 2. Task Breakdown
 
-| Task                                                    | Description                                                                                                                                                              | Effort | Affected Files/Modules                                                               |
-| :------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----- | :----------------------------------------------------------------------------------- |
-| **1. Fix API Client Initialization Redundancy**         | Ensure API client is initialized only once in `tui.Model` and reused. Verify `InitializeAPICmd` is removed or its purpose clarified.                                       | M      | `tui/model.go`, `tui/commands.go`, `tui/api_client_test.go`                          |
-| **2. Fix Duplicated Text Wrapping Logic**               | Consolidate the `wrapText` function into `tui/utils.go` and update view rendering functions to use the shared utility. Ensure tests pass.                               | S      | `tui/views.go`, `tui/utils.go`, `tui/utils_test.go`                                  |
-| **3. Fix Unclear Truncation Recovery Error Messages**   | Modify error handling in `tui/commands.go` -> `GenerateResumeCmd` to include both original processing error and recovery error when `TryRecoverPartialContent` fails.      | S      | `tui/commands.go`, `tui/commands_test.go`                                            |
-| **4. Address Terminal Compatibility Concerns**          | Execute the manual testing plan across target terminals. Document findings and implement necessary fallback styles or adjustments.                                       | M-L    | N/A (Testing Process), potentially `tui/views.go`, `tui/styles.go`                   |
-| **5. Fix Spinner Animation Inconsistency**              | Ensure `spinner.Tick` command is consistently added in `tui.Model.Update` when `state == stateGenerating`, regardless of other messages. Verify tests pass.                | S      | `tui/model.go`, `tui/spinner_test.go`                                                |
-| **6. Enhance Signal Handling & Context Cancellation**   | Introduce a root `context.Context` with cancellation. Pass it down to relevant commands (like `GenerateResumeCmd`). Cancel the context in the signal handler.             | M      | `main.go`, `tui/model.go`, `tui/commands.go`                                         |
-| **7. Ensure Exit Handlers Call Cleanup**                | Verify that `cleanupAPIClient` is called reliably on all exit paths (`tea.QuitMsg`, `Ctrl+C`, `Esc`, final state transitions). Leverage `TestExitHandlersCallCleanup`.       | S      | `tui/model.go`, `tui/api_client_test.go`                                             |
+| Task                                                                 | Description                                                                                                                                                              | Effort | Affected Files/Modules                     |
+| :------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----- | :----------------------------------------- |
+| **1. Analyze Existing TUI Tests**                                    | Deep dive into `tui/model_test.go` and `tui/views_test.go` to pinpoint all instances of brittle string/component checking on `View()` output.                             | S      | `tui/model_test.go`, `tui/views_test.go`   |
+| **2. Define Structural/Behavioral Assertions**                       | Define a set of assertions needed to verify TUI state without inspecting raw view strings (e.g., `IsShowingError`, `IsInputFocused`, `GetCurrentPrompt`).               | M      | Design Document / This Plan              |
+| **3. Implement Model Helper Methods**                                | Add methods to `tui.Model` (or a test-only extension) that expose structural/state information based on the current `model.state` and component states.                | M      | `tui/model.go` (or new test helper file) |
+| **4. Refactor `views_test.go`**                                      | Remove tests that directly check `renderXView` output strings. These views are tested implicitly via the model state tests. Keep tests for utility functions if any. | M      | `tui/views_test.go`, `tui/utils_test.go`   |
+| **5. Refactor `model_test.go` - State & Command Assertions**         | Enhance tests to rigorously check `model.state`, relevant data fields (`errorMsg`, `sourceContent`, etc.), and emitted `tea.Cmd`s after `Update` calls.              | L      | `tui/model_test.go`                      |
+| **6. Refactor `model_test.go` - Structural Assertions**              | Replace `strings.Contains(view, ...)` checks with calls to the new model helper methods implemented in Task 3.                                                            | L      | `tui/model_test.go`                      |
+| **7. Implement Input Sequence Test Helpers (Optional but Recommended)** | Create helper functions to simulate sequences of user inputs (key presses, messages) and assert the final model state or structural properties.                       | M      | New test helper file (e.g., `tui/test_helpers_test.go`) |
+| **8. Review & Refine Tests**                                         | Review all refactored TUI tests for clarity, coverage, and resilience. Ensure they focus on behavior and structure.                                                    | M      | `tui/*_test.go`                          |
+| **9. Documentation Update**                                          | Briefly document the new testing approach and the purpose of any helper methods/functions.                                                                               | S      | README.md or CONTRIBUTING.md           |
 
-**Effort Estimation:** S = Small (1-2 hours), M = Medium (2-4 hours), L = Large (4+ hours)
+**Effort Estimation:** S = Small (<= 1 day), M = Medium (1-3 days), L = Large (3-5 days)
 
 ## 3. Implementation Details
 
-### 3.1. Fix API Client Initialization Redundancy
+### 3.1. Problem Example (Current Brittle Test)
 
-*   **Goal:** Ensure the `genai.Client` and `genai.GenerativeModel` are initialized strictly once and managed correctly.
-*   **Approach:**
-    1.  **Verify Current State:** The current code in `tui/model.go` initializes the client/model in the `initializeAPIClient` helper, called during the transition from `stateWelcome` if `apiKeyOk` is true. The instances are stored in `m.apiClient` and `m.apiModel`. This seems correct.
-    2.  **Review `InitializeAPICmd`:** Analyze `tui/commands.go`. The `InitializeAPICmd` appears unused in the main TUI flow, as initialization happens directly in the `Model.Update` function.
-    3.  **Action:** Remove `InitializeAPICmd` from `tui/commands.go` and its corresponding message `APIInitResultMsg` from `tui/messages.go` if it's confirmed to be unused. Remove related tests if necessary.
-    4.  **Refinement (Optional):** Consider moving the blocking calls (`api.GetAPIKey`, `api.InitializeClient`) within `initializeAPIClient` into a command to prevent potential UI freezes, although marked as Low-Medium risk in the review. This would involve:
-        *   Creating a new command (e.g., `PerformAPIInitializationCmd`).
-        *   Returning this command from `Update` when transitioning from `stateWelcome`.
-        *   Creating a new message (e.g., `APIInitializationCompleteMsg`) returned by the command, carrying the client/model instances or an error.
-        *   Handling this new message in `Update` to store the client/model or transition to the error state.
+From `tui/views_test.go` or similar checks in `tui/model_test.go`:
 
-### 3.2. Fix Duplicated Text Wrapping Logic
+```go
+// In tui/views_test.go or tui/model_test.go
+func TestRenderWelcomeView(t *testing.T) {
+    model := Model{apiKeyOk: true, /* ... */}
+    view := renderWelcomeView(model) // Or m.View() in model_test.go
 
-*   **Goal:** Use the shared `tui/utils.go -> wrapText` function consistently.
-*   **Approach:**
-    1.  **Verify Current State:** The `diff.md` shows `tui/utils.go` and `tui/utils_test.go` were created, and `wrapText` implemented. `tui/views.go` was updated to use `wrapText`.
-    2.  **Action:** Confirm that all instances of manual text wrapping in `tui/views.go` (specifically `renderWelcomeView` and `renderGeneratingView`) have been replaced with calls to `tui.wrapText`. Ensure `tui/utils_test.go` provides adequate coverage for `wrapText`. No code changes should be needed if the diff was applied correctly.
+    // BRITTLE CHECK: Relies on exact string
+    if !strings.Contains(view, "API KEY STATUS: READY") {
+        t.Error("Welcome view should indicate API key is valid")
+    }
+    // BRITTLE CHECK: Relies on exact string
+    if !strings.Contains(view, "Press Enter to begin") {
+        t.Error("Welcome view should include instructions to proceed")
+    }
+}
+```
 
-### 3.3. Fix Unclear Truncation Recovery Error Messages
+### 3.2. Proposed Solution: Model Helper Methods
 
-*   **Goal:** Provide more context when API response truncation recovery fails.
-*   **Approach:**
-    1.  **Locate Code:** Find the error handling block in `tui/commands.go` -> `GenerateResumeCmd` where `api.TryRecoverPartialContent` is called.
-    2.  **Verify Current State:** The `diff.md` shows the error message was updated:
-        ```go
-        // Inside GenerateResumeCmd, within the error handling for output.ProcessResponseContent
-        // ...
-        } else {
-            // *** IMPROVED ERROR MESSAGE ***
-            return APIResultMsg{
-                Success: false,
-                Error:   fmt.Errorf("error processing API response: %w (recovery failed: %w)", err, recoverErr),
-            }
+Introduce methods on `tui.Model` (or potentially in a separate test utility package accessing the model) to query its state structurally.
+
+**Affected File:** `tui/model.go` (or new `tui/model_test_helpers.go`)
+
+```go
+// Example Helper Methods in tui/model.go (or similar)
+
+// IsShowingWelcome returns true if the model is in the welcome state.
+func (m Model) IsShowingWelcome() bool {
+	return m.state == stateWelcome
+}
+
+// HasValidAPIKeyIndication returns true if the model state reflects a valid API key check.
+// This focuses on the *state* driving the view, not the view itself.
+func (m Model) HasValidAPIKeyIndication() bool {
+    // Assumes apiKeyOk is the source of truth for the view's indication
+	return m.state == stateWelcome && m.apiKeyOk
+}
+
+// IsShowingAPIKeyError returns true if the model is showing an error related to the API key.
+func (m Model) IsShowingAPIKeyError() bool {
+    return (m.state == stateResultError && strings.Contains(m.errorMsg, "API key")) ||
+           (m.state == stateWelcome && !m.apiKeyOk) // Covers the initial check failure message
+}
+
+// IsSourceInputFocused returns true if the source path input component should be focused.
+func (m Model) IsSourceInputFocused() bool {
+    // Check the state and potentially the focus state of the component
+    return m.state == stateInputSourcePath // Simplified example
+    // A more robust check might involve checking m.sourcePathInput.Focused()
+    // if the focus logic is complex, but often state is sufficient.
+}
+
+// GetDisplayedError returns the error message intended for display, if any.
+func (m Model) GetDisplayedError() (string, bool) {
+    if m.state == stateResultError && m.errorMsg != "" {
+        return m.errorMsg, true
+    }
+    return "", false
+}
+
+// IsShowingSpinner returns true if the spinner should be visible.
+func (m Model) IsShowingSpinner() bool {
+    return m.state == stateGenerating
+}
+
+// GetCurrentProgressStep returns the current progress step text.
+func (m Model) GetCurrentProgressStep() (string, bool) {
+    if m.state == stateGenerating && m.progressStep != "" {
+        return m.progressStep, true
+    }
+    return "", false
+}
+```
+
+### 3.3. Refactored Test Example
+
+Replace brittle string checks with calls to the new helper methods.
+
+**Affected File:** `tui/model_test.go`
+
+```go
+// In tui/model_test.go
+func TestModelStateTransitions(t *testing.T) {
+    t.Run("Welcome to Source Input with valid API key", func(t *testing.T) {
+        m := NewModel()
+        m.apiKeyOk = true // Simulate valid API key state
+
+        // Send Enter key
+        updatedModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+        model := updatedModel.(Model)
+
+        // Assert state transition
+        if model.state != stateInputSourcePath {
+            t.Errorf("Expected state stateInputSourcePath, got %v", model.state)
         }
-        // ...
-        ```
-    3.  **Action:** Confirm this change is present and correctly wraps both the original processing error (`err`) and the recovery error (`recoverErr`). Ensure `tui/commands_test.go -> TestTruncationRecoveryErrorMessageImplementation` passes. No code changes should be needed if the diff was applied correctly.
-
-### 3.4. Address Terminal Compatibility Concerns
-
-*   **Goal:** Ensure the TUI renders acceptably across common terminal environments.
-*   **Approach:**
-    1.  **Execute Testing Plan:** Follow the procedure outlined in the previous `PLAN.md` (section 3.4):
-        *   **Target Terminals:** GNOME Terminal, Konsole, xterm (Linux); Terminal.app, iTerm2 (macOS); Windows Terminal (Windows).
-        *   **Procedure:** Build and run `resumake` on each terminal. Test all states, check rendering (colors, borders, alignment, wrapping, spinner), cursor behavior, and resizing.
-    2.  **Document Findings:** Record any rendering issues, specifying terminal, OS, and the problem. Use screenshots.
-    3.  **Implement Fixes (If Needed):**
-        *   Prioritize fixes for major layout breaks or unreadable text.
-        *   Leverage `lipgloss` features for compatibility where possible.
-        *   Consider simplifying styles (e.g., `lipgloss.NormalBorder()` instead of `lipgloss.RoundedBorder()`) if specific features cause widespread issues.
-        *   If necessary, use `termenv` to detect terminal capabilities and apply conditional styling, though this adds complexity.
-
-### 3.5. Fix Spinner Animation Inconsistency
-
-*   **Goal:** Ensure the loading spinner animates smoothly during the `stateGenerating`.
-*   **Approach:**
-    1.  **Locate Code:** Examine the `tui.Model.Update` function in `tui/model.go`.
-    2.  **Verify Current State:** The `diff.md` shows the following logic was added:
-        ```go
-        // Handle spinner updates based on state
-        if m.state == stateGenerating {
-            var spinnerCmd tea.Cmd
-            // Update the spinner regardless of msg type to ensure animation consistency
-            m.spinner, spinnerCmd = m.spinner.Update(msg)
-
-            // Always ensure the spinner keeps ticking by adding the tick command
-            cmds = append(cmds, spinnerCmd, m.spinner.Tick) // Ensures Tick is always added
+        // Assert structural property using helper
+        if !model.IsSourceInputFocused() { // Example helper usage
+             t.Error("Expected source input to be focused")
         }
-        // ... Batch commands ...
-        ```
-        This ensures `m.spinner.Tick` is added to the command batch whenever the state is `stateGenerating`.
-    3.  **Action:** Confirm this logic is present and correctly ensures the `spinner.Tick` command is always returned when in the generating state. Verify `tui/spinner_test.go` passes. No code changes should be needed if the diff was applied correctly.
-
-### 3.6. Enhance Signal Handling & Context Cancellation
-
-*   **Goal:** Allow long-running operations (like API calls) to be cancelled gracefully upon receiving a signal (Ctrl+C).
-*   **Approach:**
-    1.  **Create Root Context:** In `main.go`, create a cancellable context before starting the Bubble Tea program.
-        ```go
-        // main.go
-        import (
-            "context"
-            // ... other imports
-        )
-
-        func main() {
-            // ... flag parsing ...
-
-            // Create a cancellable context
-            ctx, cancel := context.WithCancel(context.Background())
-            defer cancel() // Ensure cancel is called eventually
-
-            model := tui.NewModel().WithContext(ctx) // Add method to pass context
-
-            // ... setup signal handling ...
-            p := setupProgramWithSignalHandling(model, cancel) // Pass cancel func
-
-            // ... run program ...
+        // Assert command emission
+        if cmd == nil { // Or check for specific command type if needed
+            t.Error("Expected a command to be returned")
         }
-
-        func setupProgramWithSignalHandling(model tea.Model, cancel context.CancelFunc) *tea.Program {
-            // ... existing setup ...
-            go func() {
-                sig := <-signalCh
-                log.Printf("Received signal: %v", sig)
-                cancel() // <<< Cancel the context here
-                p.Send(tea.QuitMsg{})
-            }()
-            return p
+        // Assert NO error is displayed
+        if _, isError := model.GetDisplayedError(); isError {
+            t.Error("Expected no error to be displayed")
         }
-        ```
-    2.  **Store Context in Model:** Add a `context.Context` field to `tui.Model`. Add a `WithContext` method to set it during initialization.
-        ```go
-        // tui/model.go
-        type Model struct {
-            // ... existing fields ...
-            ctx context.Context
+    })
+
+    t.Run("Welcome shows API Key Error", func(t *testing.T) {
+		m := NewModel()
+		m.apiKeyOk = false // Simulate invalid API key state
+
+		// Send Enter key (which triggers the error state transition in this case)
+		updatedModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		model := updatedModel.(Model)
+
+        // Assert state transition
+		if model.state != stateResultError {
+			t.Errorf("Expected state stateResultError, got %v", model.state)
+		}
+        // Assert structural property using helper
+		if !model.IsShowingAPIKeyError() {
+			t.Error("Expected model to indicate an API key error")
+		}
+        // Assert specific error message content (less brittle than checking full view)
+        errMsg, ok := model.GetDisplayedError()
+        if !ok || !strings.Contains(errMsg, "API key") {
+             t.Errorf("Expected error message about API key, got: %q", errMsg)
         }
+	})
+}
+```
 
-        func (m Model) WithContext(ctx context.Context) Model {
-            m.ctx = ctx
-            return m
-        }
-        ```
-    3.  **Pass Context to Commands:** Modify commands that perform potentially long-running operations (like `GenerateResumeCmd`) to accept and use the context from the model.
-        ```go
-        // tui/commands.go
-        func GenerateResumeCmd(ctx context.Context, client *genai.Client, /*...*/) tea.Cmd {
-            return func() tea.Msg {
-                // ... existing setup ...
-                // Use the passed context for the API request
-                response, err := api.ExecuteRequest(ctx, model, promptContent)
-                // ... handle response ...
-            }
-        }
+### 3.4. Input Sequence Testing Helper (Conceptual)
 
-        // tui/model.go -> Update (when calling GenerateResumeCmd)
-        cmds = append(cmds, GenerateResumeCmd(m.ctx, m.apiClient, /*...*/))
-        ```
-    4.  **Update API Layer:** Ensure `api.ExecuteRequest` and `api.InitializeClient` accept and use the passed context. (They already do).
+**Affected File:** New test helper file (e.g., `tui/test_helpers_test.go`)
 
-### 3.7. Ensure Exit Handlers Call Cleanup
+```go
+package tui
 
-*   **Goal:** Guarantee `cleanupAPIClient` is called on all program exit paths.
-*   **Approach:**
-    1.  **Verify Current State:** The `diff.md` shows `cleanupAPIClient` is called in `tui.Model.Update` for:
-        *   `tea.QuitMsg`
-        *   `tea.KeyCtrlC`
-        *   `tea.KeyEsc`
-        *   `tea.KeyEnter` when in `stateResultSuccess` or `stateResultError`.
-    2.  **Signal Handler:** The signal handler sends `tea.QuitMsg`, which triggers the cleanup logic in `Update`.
-    3.  **Action:** Confirm these calls are present. Run the existing test `tui/api_client_test.go -> TestExitHandlersCallCleanup` to verify. This test mocks `cleanupAPIClient` and checks if it's called for the relevant messages and states. No code changes should be needed if the diff was applied correctly and the test passes.
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"testing"
+)
+
+// Simulate sends a sequence of messages to a model and returns the final model.
+func Simulate(t *testing.T, initialModel tea.Model, messages ...tea.Msg) tea.Model {
+	t.Helper()
+	currentModel := initialModel
+	var cmd tea.Cmd
+	for _, msg := range messages {
+		currentModel, cmd = currentModel.Update(msg)
+		// In a real scenario, you might need to handle commands
+		// by generating their corresponding result messages and feeding them back.
+		// For simplicity here, we ignore commands, but a full implementation
+		// would need to process them (e.g., if cmd produces FileReadResultMsg).
+		if cmd != nil {
+            // Basic example: If a command is returned, execute it and feed the result back
+            // This needs careful implementation based on command types.
+            // resultMsg := cmd() // This blocks, real implementation needs care
+            // currentModel, cmd = currentModel.Update(resultMsg)
+            t.Logf("Note: Command returned but not processed in this simple Simulate helper: %T", cmd)
+		}
+	}
+	return currentModel
+}
+
+// Example Usage in a test:
+func TestFullUserInputFlow(t *testing.T) {
+    initialModel := NewModel()
+    initialModel.apiKeyOk = true // Assume valid key
+
+    // Define the sequence of inputs
+    inputs := []tea.Msg{
+        tea.KeyMsg{Type: tea.KeyEnter},         // Welcome -> Source Input
+        // Simulate typing a path (can send individual KeyRunes or set value directly for simplicity)
+        // tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/path/to/file.md")},
+        tea.KeyMsg{Type: tea.KeyEnter},         // Source Input -> Stdin Input (triggers FileReadCmd)
+        // Simulate FileReadResultMsg (assuming file read succeeds)
+        FileReadResultMsg{Success: true, Content: "Existing data"},
+        // Simulate typing in textarea
+        // tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("New input")},
+        tea.KeyMsg{Type: tea.KeyCtrlD},         // Stdin Input -> Confirm Generate (triggers StdinSubmitMsg)
+        // Simulate StdinSubmitMsg
+        StdinSubmitMsg{Content: "New input"},
+        tea.KeyMsg{Type: tea.KeyEnter},         // Confirm Generate -> Generating (triggers GenerateResumeCmd)
+        // Simulate APIResultMsg (assuming success)
+        APIResultMsg{Success: true, Content: "Generated resume", OutputPath: "out.md"},
+    }
+
+    // Simulate the flow
+    finalModelInterface := Simulate(t, initialModel, inputs...)
+    finalModel := finalModelInterface.(Model) // Type assertion
+
+    // Assert final state
+    if finalModel.state != stateResultSuccess {
+        t.Errorf("Expected final state stateResultSuccess, got %v", finalModel.state)
+    }
+    if finalModel.outputPath != "out.md" {
+        t.Errorf("Expected output path 'out.md', got %q", finalModel.outputPath)
+    }
+    // Add more assertions using helpers
+    if _, isError := finalModel.GetDisplayedError(); isError {
+        t.Error("Expected no final error")
+    }
+}
+
+```
+*Note: The `Simulate` helper needs careful implementation to handle commands correctly, potentially by executing them and sending their resulting messages back into the `Update` loop.*
 
 ## 4. Potential Challenges & Considerations
 
-*   **API Client Lifecycle:** Ensuring `client.Close()` is called *exactly once* on all exit paths requires careful state management. The current approach of calling it within `Update` handlers for exit messages/keys seems robust.
-*   **Terminal Compatibility:** Fixing rendering issues across diverse terminals can be time-consuming and may require compromises on visual fidelity. A pragmatic approach might be needed, prioritizing functionality over perfect rendering everywhere.
-*   **Context Propagation:** Adding context cancellation requires passing the context through relevant layers (`main` -> `tui.Model` -> `tui.Commands` -> `api`). This adds minor complexity but improves robustness.
-*   **Testing Asynchronous Operations:** Testing context cancellation thoroughly might require more complex integration tests or mocks that simulate blocking operations.
+1.  **Complexity of Helpers:** Helper methods on the model must accurately reflect the logic driving the view without becoming overly complex or tightly coupled to specific view rendering details.
+2.  **Asynchronous Commands:** Testing flows involving asynchronous commands (`tea.Cmd`) requires careful handling. The `Simulate` helper needs to potentially execute commands and feed their resulting `tea.Msg` back into the `Update` loop, which can be complex to implement robustly for all command types.
+3.  **Focus Management:** Accurately testing which component has focus might require exposing more state from the underlying Bubble components or relying on state-machine logic (e.g., "in state X, component Y *should* be focused").
+4.  **Refactoring Effort:** Refactoring existing tests, especially in `model_test.go`, will require careful work to replace view checks with state/structural checks without losing coverage.
+5.  **Maintaining Helpers:** As the TUI evolves, the helper methods must be maintained alongside the model and view logic.
 
 ## 5. Testing Strategy
 
-*   **Unit Tests:**
-    *   Verify `tui/utils_test.go` covers `wrapText` edge cases.
-    *   Verify `tui/commands_test.go -> TestTruncationRecoveryErrorMessageImplementation` passes.
-    *   Verify `tui/spinner_test.go` confirms consistent ticking in the generating state.
-    *   Verify `tui/api_client_test.go -> TestAPIClientInitialization` passes (confirms single initialization).
-    *   Verify `tui/api_client_test.go -> TestExitHandlersCallCleanup` passes (confirms cleanup is called).
-    *   Add unit tests for context propagation if significant logic is added (e.g., checking if context is passed to commands).
-*   **Integration Tests:**
-    *   The existing `main_test.go` tests help flag parsing but are less effective for the TUI.
-    *   Consider adding integration tests that simulate sending signals (e.g., `syscall.Kill(cmd.Process.Pid, syscall.SIGINT)`) and check for graceful shutdown, although this can be platform-dependent and complex.
-*   **Manual Testing:**
-    *   **Crucial** for **Terminal Compatibility:** Execute the testing plan from section 3.4 across all target terminals.
-    *   Verify spinner animation smoothness during the generation phase.
-    *   Test all exit paths (Ctrl+C, Esc, Enter in final states) to ensure clean shutdown without errors.
-    *   Test context cancellation by sending Ctrl+C during the "Generating" phase and observing if the process exits promptly (may require adding logging or simulating a long API call).
+1.  **Unit Tests (Primary Focus):**
+    *   Test individual `tui.Model` helper methods thoroughly.
+    *   Test the `tui.Model.Update` function extensively:
+        *   Verify correct state transitions for various `tea.Msg` inputs in each state.
+        *   Verify correct data updates within the model (`errorMsg`, `sourceContent`, `progressStep`, etc.).
+        *   Verify correct `tea.Cmd` emissions for relevant state transitions.
+        *   Use the new helper methods to assert structural properties post-update (e.g., `IsShowingError`, `IsSpinnerVisible`).
+    *   Continue unit testing commands (`tui/commands_test.go`) using mocks/stubs where necessary (especially for API/file interactions not covered by dry runs).
+    *   Remove direct testing of `renderXView` functions (`tui/views_test.go`) as they are implicitly tested via the model state tests. Keep tests for utility functions like `wrapText`.
+2.  **Integration Tests (Via Input Sequences):**
+    *   Use the `Simulate` helper (or similar) to test common user flows (e.g., welcome -> generate -> success, welcome -> file error, welcome -> API error).
+    *   Assert the final `Model` state and key structural properties after the sequence.
+3.  **Manual Testing (Reduced Scope):**
+    *   Perform minimal manual checks after significant changes to ensure the overall look and feel remain correct, but rely primarily on automated tests for functional correctness.
 
 ## 6. Open Questions
 
-1.  **Terminal Compatibility Strategy:** If significant compatibility issues are found, what is the preferred approach: aiming for broad compatibility with simpler styles, or defining a minimum set of required terminal features?
-2.  **Context Cancellation Necessity:** While good practice, is immediate cancellation of the *current* API request strictly necessary for this prototype, or is ensuring cleanup via `tea.QuitMsg` sufficient for now? (Recommendation: Implement context cancellation for robustness).
-3.  **Blocking Calls in `Update`:** Is the potential minor UI freeze during initial API client setup acceptable (Low-Medium risk), or should it be moved to a command as suggested in 3.1? (Recommendation: Defer unless observed to be a problem).
+1.  **Definition of "Structure":** How granular should the structural helper methods be? Is checking for the *presence* of an error message sufficient, or should helpers sometimes return specific error *types* or key phrases if they represent distinct states? (Initial proposal: Focus on presence/absence of elements like errors, spinners, specific inputs, and key state indicators like API key validity).
+2.  **Command Simulation:** How comprehensively should the `Simulate` helper handle `tea.Cmd` execution? Should it fully mock file reads, API calls, etc., or focus only on commands generating simple messages? (Initial proposal: Start simple, handling only commands that return basic messages like `StdinSubmitMsg`, and expand if needed).
+3.  **Helper Location:** Should helper methods be directly on `tui.Model` or in a separate test-only package/file to avoid polluting the main model? (Initial proposal: Add directly to `tui.Model` for simplicity, reconsider if it becomes cluttered).
+```
