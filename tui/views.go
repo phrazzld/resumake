@@ -254,22 +254,16 @@ func renderStdinInputView(m Model) string {
 		Align(lipgloss.Center).
 		Render("✏️ Enter Resume Details")
 	
+	// Important: Move keyboard shortcuts to top for better visibility
+	keyboardGuide := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(accentColor).
+		Render("💡 Tip: Enter your details below, then press Ctrl+D when finished")
+	
 	// Create a description section explaining the purpose
 	description := wrap(
-		"Tell us about your professional background. The more details you provide, "+
-		"the better your resume will be. Include your experience, skills, education, and achievements.",
+		"Tell us about your professional background. Include your experience, skills, education, and achievements.",
 		displayWidth - 8)
-	
-	// Build the instructions section
-	instructionsTitle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(highlightColor).
-		Render("Instructions")
-	
-	instructionsContent := wrap(
-		"Type your resume content below. Include as much detail as possible about your "+
-		"professional experience and skills. The AI will structure and enhance this information.",
-		displayWidth - 16)
 	
 	// Style for the textarea container with focus-aware styling
 	textareaContent := m.stdinInput.View()
@@ -282,11 +276,33 @@ func renderStdinInputView(m Model) string {
 		styledTextareaView = UnfocusedStyle(textareaContent, displayWidth - 8)
 	}
 	
+	// Textarea label and scrolling notice
+	textareaLabel := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("Resume Content (scrollable)")
+	
+	// Create an input and shortcuts section
+	inputSection := lipgloss.JoinVertical(
+		lipgloss.Left,
+		textareaLabel,
+		"",
+		styledTextareaView,
+	)
+	
+	// Style the input section box
+	inputSectionBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
+		Padding(1, 2).
+		Width(displayWidth - 4).
+		Render(inputSection)
+	
 	// Create a suggestions section
 	suggestionsTitle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(highlightColor).
-		Render("Suggestions:")
+		Render("Suggested Content to Include:")
 	
 	suggestionsContent := "• Work Experience: Company names, positions, dates, and key responsibilities\n" +
 		"• Skills: Technical, soft, and domain-specific skills\n" +
@@ -313,44 +329,6 @@ func renderStdinInputView(m Model) string {
 		"Education: BS Computer Science, University of Technology (2015)",
 		displayWidth - 12)
 	
-	// Keyboard shortcuts section
-	shortcutsTitle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(highlightColor).
-		Render("Keyboard Shortcuts")
-	
-	shortcutsContent := "• Arrow keys: Navigate within the text\n" +
-		"• Enter: Add new line\n" +
-		"• Tab: Indent text\n" +
-		"• Ctrl+D: Finish input and continue\n" +
-		"• Ctrl+C: Quit application"
-	
-	// If terminal is narrow, wrap the shortcuts content
-	shortcutsContent = wrap(shortcutsContent, displayWidth - 12)
-	
-	// Build the main content with input area
-	mainContent := lipgloss.JoinVertical(
-		lipgloss.Left,
-		instructionsTitle,
-		"",
-		instructionsContent,
-		"",
-		// Add the text area view with focus-aware styling
-		styledTextareaView,
-		"",
-		shortcutsTitle,
-		"",
-		shortcutsContent,
-	)
-	
-	// Style the main content box
-	mainContentBox := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(primaryColor).
-		Padding(1, 2).
-		Width(displayWidth - 4).
-		Render(mainContent)
-	
 	// Create suggestions and examples box
 	tipsContent := lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -371,14 +349,16 @@ func renderStdinInputView(m Model) string {
 		Width(displayWidth - 4).
 		Render(tipsContent)
 	
-	// Compose the complete view
+	// Compose the complete view with the keyboard guide at the top for visibility
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
 		title,
 		"",
-		lipgloss.NewStyle().Width(displayWidth - 8).Render(description),
+		keyboardGuide,
 		"",
-		mainContentBox,
+		description,
+		"",
+		inputSectionBox,
 		"",
 		tipsBox,
 	)

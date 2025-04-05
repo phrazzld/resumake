@@ -31,7 +31,7 @@ func TestEnhancedStdinInputView(t *testing.T) {
 			"Resume Details",                           // Title
 			"professional background",                  // Purpose description
 			"Ctrl+D",                                   // Finish instruction
-			"Suggestions:",                             // Tips section
+			"Suggested Content to Include:",           // Tips section
 		}
 		
 		for _, element := range requiredElements {
@@ -95,17 +95,14 @@ func TestEnhancedStdinInputView(t *testing.T) {
 		
 		stdinInputView := renderStdinInputView(model)
 		
-		// Check for keyboard shortcuts section
-		shortcutsTerms := []string{"Ctrl+D", "Enter", "arrow", "keys"}
-		shortcutsFound := 0
-		for _, term := range shortcutsTerms {
-			if strings.Contains(strings.ToLower(stdinInputView), strings.ToLower(term)) {
-				shortcutsFound++
-			}
+		// Check for keyboard guide
+		if !strings.Contains(stdinInputView, "Tip: Enter your details below, then press Ctrl+D when finished") {
+			t.Error("Stdin input view should include the keyboard tip at the top")
 		}
 		
-		if shortcutsFound < 3 {
-			t.Errorf("Stdin input view should include at least 3 keyboard shortcuts")
+		// Check for scrollable note
+		if !strings.Contains(stdinInputView, "scrollable") {
+			t.Error("Stdin input view should indicate that the textarea is scrollable")
 		}
 	})
 	

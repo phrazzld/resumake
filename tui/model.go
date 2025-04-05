@@ -95,7 +95,7 @@ func NewModel() Model {
 	stdinTA := textarea.New()
 	stdinTA.Placeholder = "Enter details about your experience, skills, etc."
 	stdinTA.SetWidth(80)
-	stdinTA.SetHeight(20)
+	stdinTA.SetHeight(10) // Set height to 10 rows to avoid pushing content out of view
 	
 	// Initialize spinner for loading state with more visible spinner
 	sp := spinner.New()
@@ -290,10 +290,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			inputWidth = 60
 		}
 		
-		textareaHeight := msg.Height - 10
-		if textareaHeight < 10 {
-			textareaHeight = 10
-		}
+		// Fixed textarea height to avoid pushing content out of view
+		// Keep as a constant 10 rows regardless of window height
+		textareaHeight := 10
 		
 		m.sourcePathInput.Width = inputWidth
 		m.stdinInput.SetWidth(inputWidth)
