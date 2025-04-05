@@ -231,38 +231,149 @@ func renderSourceFileInputView(m Model) string {
 	)
 }
 
-// renderStdinInputView generates the stdin input view content
+// renderStdinInputView generates the enhanced stdin input view content
 func renderStdinInputView(m Model) string {
-	// Calculate display width (unused in this view currently)
-	_ = getConstrainedWidth(m.width)
+	// Calculate display width
+	displayWidth := getConstrainedWidth(m.width)
 	
-	// Create a title with high contrast
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
+	// Create a centered title with high contrast
 	title := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(highlightColor).
 		Background(primaryColor).
 		Padding(1).
-		Render(" Enter Resume Details ")
+		Width(displayWidth - 4).
+		Align(lipgloss.Center).
+		Render("✏️ Enter Resume Details")
 	
-	// Instructions
-	instructions := lipgloss.NewStyle().Bold(true).Render("Tell us about your experience, skills, and qualifications:")
+	// Create a description section explaining the purpose
+	description := wrap(
+		"Tell us about your professional background. The more details you provide, "+
+		"the better your resume will be. Include your experience, skills, education, and achievements.",
+		displayWidth - 8)
 	
-	// Add the text area view
-	textareaView := m.stdinInput.View()
+	// Build the instructions section
+	instructionsTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("Instructions")
 	
-	// Add hint
-	hint := italicStyle.Render("Press Ctrl+D when finished")
+	instructionsContent := wrap(
+		"Type your resume content below. Include as much detail as possible about your "+
+		"professional experience and skills. The AI will structure and enhance this information.",
+		displayWidth - 16)
 	
-	// Compose the view
-	return lipgloss.JoinVertical(
+	// Style for the textarea container to make it more prominent
+	textareaContainer := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
+		Padding(0, 1).
+		Width(displayWidth - 8)
+	
+	// Create a suggestions section
+	suggestionsTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("Suggestions:")
+	
+	suggestionsContent := "• Work Experience: Company names, positions, dates, and key responsibilities\n" +
+		"• Skills: Technical, soft, and domain-specific skills\n" +
+		"• Education: Degrees, institutions, graduation dates\n" +
+		"• Achievements: Awards, certifications, projects\n" +
+		"• Use bullet points for better readability\n" +
+		"• Highlight metrics and results when possible (e.g., 'increased sales by 20%')"
+	
+	// If terminal is narrow, wrap the suggestions content
+	suggestionsContent = wrap(suggestionsContent, displayWidth - 12)
+	
+	// Create a formatting examples section
+	examplesTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("Example Format:")
+	
+	examplesContent := wrap(
+		"Work Experience:\n"+
+		"- Senior Software Engineer at XYZ Corp (2019-2023)\n"+
+		"- Led a team of 5 developers to deliver a new product feature\n"+
+		"- Reduced system latency by 40% through code optimization\n\n"+
+		"Skills: JavaScript, React, Node.js, Project Management\n\n"+
+		"Education: BS Computer Science, University of Technology (2015)",
+		displayWidth - 12)
+	
+	// Keyboard shortcuts section
+	shortcutsTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("Keyboard Shortcuts")
+	
+	shortcutsContent := "• Arrow keys: Navigate within the text\n" +
+		"• Enter: Add new line\n" +
+		"• Tab: Indent text\n" +
+		"• Ctrl+D: Finish input and continue\n" +
+		"• Ctrl+C: Quit application"
+	
+	// If terminal is narrow, wrap the shortcuts content
+	shortcutsContent = wrap(shortcutsContent, displayWidth - 12)
+	
+	// Build the main content with input area
+	mainContent := lipgloss.JoinVertical(
 		lipgloss.Left,
+		instructionsTitle,
+		"",
+		instructionsContent,
+		"",
+		// Add the text area view with styling
+		textareaContainer.Render(m.stdinInput.View()),
+		"",
+		shortcutsTitle,
+		"",
+		shortcutsContent,
+	)
+	
+	// Style the main content box
+	mainContentBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
+		Padding(1, 2).
+		Width(displayWidth - 4).
+		Render(mainContent)
+	
+	// Create suggestions and examples box
+	tipsContent := lipgloss.JoinVertical(
+		lipgloss.Left,
+		suggestionsTitle,
+		"",
+		suggestionsContent,
+		"",
+		examplesTitle,
+		"",
+		examplesContent,
+	)
+	
+	// Style the tips box
+	tipsBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(secondaryColor).
+		Padding(1, 2).
+		Width(displayWidth - 4).
+		Render(tipsContent)
+	
+	// Compose the complete view
+	return lipgloss.JoinVertical(
+		lipgloss.Center,
 		title,
 		"",
-		instructions,
+		lipgloss.NewStyle().Width(displayWidth - 8).Render(description),
 		"",
-		textareaView,
+		mainContentBox,
 		"",
-		hint,
+		tipsBox,
 	)
 }
 
