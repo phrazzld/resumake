@@ -109,38 +109,125 @@ func renderWelcomeView(m Model) string {
 	return docStyle.Render(content)
 }
 
-// renderSourceFileInputView generates the source file input view content
+// renderSourceFileInputView generates the enhanced source file input view content
 func renderSourceFileInputView(m Model) string {
-	// Calculate display width (unused in this view currently)
-	_ = getConstrainedWidth(m.width)
+	// Calculate display width
+	displayWidth := getConstrainedWidth(m.width)
 	
-	// Create a title with high contrast
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
+	// Create a centered title with high contrast
 	title := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(highlightColor).
 		Background(primaryColor).
 		Padding(1).
-		Render(" Source File Input ")
+		Width(displayWidth - 4).
+		Align(lipgloss.Center).
+		Render("📄 Source File Input")
 	
-	// Create instructions with good contrast
-	instructions := lipgloss.NewStyle().Bold(true).Render("Enter path to existing resume file (optional):")
+	// Create a description section explaining the purpose
+	description := wrap(
+		"Provide an existing resume file to enhance. Resumake will use this as a " +
+		"starting point to generate an improved version with better formatting and content.",
+		displayWidth - 8)
 	
-	// Add text input view
-	inputView := m.sourcePathInput.View()
+	// Build the instructions section with examples and flag indication
+	instructionsTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("Instructions")
 	
-	// Add hint about optional nature
-	hint := italicStyle.Render("This step is optional. Press Enter to continue.")
+	// Create instructions content
+	instructionsContent := "Enter the path to your existing resume file:"
 	
-	// Compose the view
-	return lipgloss.JoinVertical(
+	// Add flag path indication if provided
+	if m.flagSourcePath != "" {
+		flagInfo := lipgloss.NewStyle().
+			Foreground(accentColor).
+			Render("• Pre-filled from command line flags: " + m.flagSourcePath)
+		instructionsContent += "\n\n" + flagInfo
+	}
+	
+	// Display the input field with custom styling to make it more prominent
+	styledInputView := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
+		Padding(0, 1).
+		Width(displayWidth - 8).
+		Render(m.sourcePathInput.View())
+	
+	// Create a helpful tips section
+	tipsTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("Helpful Tips")
+	
+	tipsContent := "• This step is optional. Press Enter to continue without a source file\n" +
+		"• Supported file formats: .txt, .md, .markdown\n" +
+		"• Example path: /home/user/documents/my_resume.md or ./resume.txt\n" +
+		"• Maximum file size: 10MB\n" +
+		"• Using a source file can significantly improve the quality of your generated resume"
+	
+	// If terminal is narrow, wrap the tips content
+	tipsContent = wrap(tipsContent, displayWidth - 12)
+	
+	// Keyboard shortcuts section
+	shortcutsTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("Keyboard Shortcuts")
+	
+	shortcutsContent := "• Enter: Continue to next step\n" +
+		"• Ctrl+C: Quit application"
+	
+	// Put instructions, input, and shortcuts in a main content box
+	mainContent := lipgloss.JoinVertical(
 		lipgloss.Left,
+		instructionsTitle,
+		"",
+		instructionsContent,
+		"",
+		styledInputView,
+		"",
+		shortcutsTitle,
+		"",
+		shortcutsContent,
+	)
+	
+	mainContentBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
+		Padding(1, 2).
+		Width(displayWidth - 4).
+		Render(mainContent)
+	
+	// Put tips in a separate tips box
+	tipsBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(secondaryColor).
+		Padding(1, 2).
+		Width(displayWidth - 4).
+		Render(lipgloss.JoinVertical(
+			lipgloss.Left,
+			tipsTitle,
+			"",
+			tipsContent,
+		))
+	
+	// Compose the complete view
+	return lipgloss.JoinVertical(
+		lipgloss.Center,
 		title,
 		"",
-		instructions,
+		lipgloss.NewStyle().Width(displayWidth - 8).Render(description),
 		"",
-		inputView,
+		mainContentBox,
 		"",
-		hint,
+		tipsBox,
 	)
 }
 
