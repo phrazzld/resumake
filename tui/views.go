@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 	
 	"github.com/charmbracelet/lipgloss"
 )
@@ -345,32 +346,70 @@ func renderSuccessView(m Model) string {
 	)
 }
 
-// renderErrorView generates the error view
+// renderErrorView generates the error view with contextual troubleshooting
 func renderErrorView(m Model) string {
-	// Calculate display width (unused in this view currently)
-	_ = getConstrainedWidth(m.width)
+	// Calculate display width
+	displayWidth := getConstrainedWidth(m.width)
 	
-	// Create a title with high contrast
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
+	// Analyze the error to determine the category and troubleshooting hints
+	category, hints, docRef := analyzeError(m.errorMsg)
+	
+	// Create a title with high contrast that includes the error category
 	title := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(highlightColor).
 		Background(errorColor).
 		Padding(1).
-		Render(" Error ")
+		Render(" Error: " + category + " ")
 	
-	// Show error message
+	// Show error message with consistent wrapping
 	errorBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(errorColor).
-		Padding(1).
-		Render(errorStyle.Render(m.errorMsg))
+		Padding(1, 2).
+		Width(displayWidth - 4).
+		Render(errorStyle.Render(wrap(m.errorMsg, displayWidth - 10)))
 	
-	// Compose the view
+	// Create a troubleshooting box with hints
+	troubleshootingTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("Troubleshooting")
+	
+	// Build the hints section
+	var hintsContent strings.Builder
+	for i, hint := range hints {
+		if i > 0 {
+			hintsContent.WriteString("\n\n")
+		}
+		hintsContent.WriteString("• " + hint)
+	}
+	
+	// Add doc reference if available
+	if docRef != "" {
+		hintsContent.WriteString("\n\n" + italicStyle.Render(docRef))
+	}
+	
+	troubleshootingBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(secondaryColor).
+		Padding(1, 2).
+		Width(displayWidth - 4).
+		Render(troubleshootingTitle + "\n\n" + hintsContent.String())
+	
+	// Compose the view with all sections
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,
 		"",
 		errorBox,
+		"",
+		troubleshootingBox,
 		"",
 		italicStyle.Render("Press Enter to quit"),
 	)
