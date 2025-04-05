@@ -127,12 +127,7 @@ func StyledSection(title string, content string, boxStyle lipgloss.Style) string
 // This creates a visually distinct container for focused elements
 func FocusedStyle(content string, width int) string {
 	return lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(focusBorderColor).
-		BorderLeft(true).
-		BorderRight(true).
-		BorderTop(true).
-		BorderBottom(true).
+		Foreground(focusBorderColor).
 		Bold(true).
 		Padding(0, 1).
 		Width(width).
@@ -143,11 +138,10 @@ func FocusedStyle(content string, width int) string {
 // This creates a neutral container that doesn't draw attention
 func UnfocusedStyle(content string, width int) string {
 	return lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(subtleColor).
+		Foreground(textColor).
 		Padding(0, 1).
 		Width(width).
-		Render(content)
+		Render("  " + content) // Add spacing to match the focused view
 }
 
 // FocusedInputLabel creates a label that indicates focus state
