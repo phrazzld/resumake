@@ -45,6 +45,7 @@ func ReadSourceFileCmd(filePath string) tea.Cmd {
 
 // GenerateResumeCmd returns a command that generates a resume using the API
 // and returns an APIResultMsg with the result.
+// It now includes multiple progress update points for better UX.
 func GenerateResumeCmd(ctx context.Context, client *genai.Client, model *genai.GenerativeModel, sourceContent, stdinContent, outputFlagPath string, dryRun bool) tea.Cmd {
 	return func() tea.Msg {
 		// Skip actual API call if this is a dry run (for testing)
@@ -71,9 +72,15 @@ func GenerateResumeCmd(ctx context.Context, client *genai.Client, model *genai.G
 		// Use the provided context for the API request
 		// This allows for proper cancellation if the user quits the application
 		
+		// PROGRESS UPDATE 1: Building prompt
+		tea.Cmd(SendProgressUpdateCmd("1 of 4", "Building prompt from your inputs..."))()
+		
 		// Build the prompt from source content and stdin input
 		promptContent := prompt.GeneratePromptContent(sourceContent, stdinContent)
 
+		// PROGRESS UPDATE 2: Sending to API
+		tea.Cmd(SendProgressUpdateCmd("2 of 4", "Sending request to Gemini AI..."))()
+		
 		// Execute API request with the prompt content
 		response, err := api.ExecuteRequest(ctx, model, promptContent)
 		if err != nil {
@@ -83,6 +90,9 @@ func GenerateResumeCmd(ctx context.Context, client *genai.Client, model *genai.G
 			}
 		}
 
+		// PROGRESS UPDATE 3: Processing response
+		tea.Cmd(SendProgressUpdateCmd("3 of 4", "Processing AI response..."))()
+		
 		// Process the API response
 		markdownContent, err := output.ProcessResponseContent(response)
 		truncatedMsg := ""
@@ -94,6 +104,9 @@ func GenerateResumeCmd(ctx context.Context, client *genai.Client, model *genai.G
 				response.Candidates[0].FinishReason == genai.FinishReasonMaxTokens {
 				
 				truncatedMsg = "Warning: Response was truncated due to token limit"
+				
+				// PROGRESS UPDATE: Handling truncated response
+				tea.Cmd(SendProgressUpdateCmd("3 of 4", "Handling truncated response..."))()
 				
 				// Try to recover partial content
 				partialContent, recoverErr := api.TryRecoverPartialContent(response)
@@ -113,6 +126,9 @@ func GenerateResumeCmd(ctx context.Context, client *genai.Client, model *genai.G
 			}
 		}
 
+		// PROGRESS UPDATE 4: Saving result
+		tea.Cmd(SendProgressUpdateCmd("4 of 4", "Saving generated resume to file..."))()
+		
 		// Write the generated markdown to a file
 		outputPath, err := output.WriteOutput(markdownContent, outputFlagPath)
 		if err != nil {
@@ -122,6 +138,9 @@ func GenerateResumeCmd(ctx context.Context, client *genai.Client, model *genai.G
 			}
 		}
 
+		// PROGRESS UPDATE: Complete
+		tea.Cmd(SendProgressUpdateCmd("Complete", "Resume generation completed successfully!"))()
+		
 		return APIResultMsg{
 			Success:      true,
 			Content:      markdownContent,

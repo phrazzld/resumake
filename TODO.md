@@ -8,7 +8,7 @@
   - Description: Enhance layout, API key status display, instructions, fixed for light/dark themes
   - Dependencies: Consistent styles
   - Priority: High
-- [ ] Enhance generating view with spinner improvements
+- [x] Enhance generating view with spinner improvements
   - Description: Better layout, spinner presentation, progress message clarity
   - Dependencies: Consistent styles
   - Priority: High

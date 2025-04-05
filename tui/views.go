@@ -213,8 +213,13 @@ func renderConfirmGenerateView(m Model) string {
 	)
 }
 
-// renderGeneratingView generates the view during generation
+// renderGeneratingView generates the view during resume generation
 func renderGeneratingView(m Model) string {
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
 	// Calculate display width
 	displayWidth := m.width
 	if displayWidth > 80 {
@@ -229,17 +234,96 @@ func renderGeneratingView(m Model) string {
 		Foreground(highlightColor).
 		Background(primaryColor).
 		Padding(1).
-		Render(" Generating Resume ")
+		Width(displayWidth - 4).
+		Align(lipgloss.Center).
+		Render("Generating Your Resume")
 	
-	// Show spinner
-	spinnerText := m.spinner.View() + " Processing your information..."
+	// Calculate total characters of input
+	totalChars := len(m.stdinContent) + len(m.sourceContent)
 	
-	// Compose the view
-	return lipgloss.JoinVertical(
+	// Create a spinner with enhanced style
+	spinnerStyle := progressStyle.Copy().Bold(true)
+	spinnerIcon := spinnerStyle.Render(m.spinner.View())
+	
+	// Create a progress indicator
+	var progressIndicator string
+	
+	if m.progressStep != "" && m.progressMsg != "" {
+		// Show specific progress steps when available
+		stepTitle := boldStyle.Copy().
+			Foreground(highlightColor).
+			Background(accentColor).
+			Padding(0, 1).
+			Width(displayWidth - 10).
+			Align(lipgloss.Center).
+			Render("Step: " + m.progressStep)
+		
+		progressIndicator = lipgloss.JoinVertical(
+			lipgloss.Center,
+			stepTitle,
+			"",
+			wrap(m.progressMsg, displayWidth - 10),
+		)
+		
+		// Put it in a nice box
+		progressIndicator = secondaryBoxStyle.Copy().
+			Width(displayWidth - 6).
+			Render(progressIndicator)
+	} else {
+		// Default message when no specific progress is available
+		progressIndicator = spinnerIcon + " " + boldStyle.Render("Processing your information...")
+	}
+	
+	// Display input information
+	inputInfo := lipgloss.JoinVertical(
 		lipgloss.Left,
+		boldStyle.Render(fmt.Sprintf("Processing %d characters of input", totalChars)),
+	)
+	
+	// Show source file info if provided
+	if m.sourceContent != "" {
+		sourceInfo := "Source file: " + m.sourcePathInput.Value()
+		inputInfo = lipgloss.JoinVertical(
+			lipgloss.Left,
+			inputInfo,
+			"",
+			wrap(sourceInfo, displayWidth-8),
+		)
+	}
+	
+	// Create a styled input info box
+	inputInfoBox := primaryBoxStyle.Copy().
+		Width(displayWidth - 6).
+		Render(inputInfo)
+	
+	// Show estimated time
+	estimatedTime := tipStyle.Render(wrap("This may take up to 60 seconds depending on the input size.", displayWidth-8))
+	
+	// Additional information about the generation process
+	processInfo := lipgloss.JoinVertical(
+		lipgloss.Left,
+		wrap("The Gemini API is analyzing your experience and crafting a professional resume.", displayWidth-8),
+		"",
+		wrap("You'll be able to review and save the result when it's complete.", displayWidth-8),
+	)
+	
+	// Create a styled process info box
+	processInfoBox := accentBoxStyle.Copy().
+		Width(displayWidth - 6).
+		Render(processInfo)
+	
+	// Compose the complete view with all sections
+	return lipgloss.JoinVertical(
+		lipgloss.Center,
 		title,
 		"",
-		boldStyle.Render(spinnerText),
+		progressIndicator,
+		"",
+		inputInfoBox,
+		"",
+		estimatedTime,
+		"",
+		processInfoBox,
 	)
 }
 
