@@ -1,28 +1,42 @@
 # TODO
 
-## Help Functionality Fix
-- [x] Add special handling for flag.ErrHelp in main.go
-  - Description: Modify main.go to detect when help flag is used and exit cleanly with code 0
+- [x] Create consistent color palette and styles
+  - Description: Define base lipgloss styles for titles, text, hints, errors, success, inputs
   - Dependencies: None
   - Priority: High
-
-- [x] Add imports for flag and os packages in main.go
-  - Description: Import the flag package to access ErrHelp and os package for Exit function
+- [x] Improve welcome view
+  - Description: Enhance layout, API key status display, instructions, fixed for light/dark themes
+  - Dependencies: Consistent styles
+  - Priority: High
+- [x] Enhance generating view with spinner improvements
+  - Description: Better layout, spinner presentation, progress message clarity
+  - Dependencies: Consistent styles
+  - Priority: High
+- [x] Implement resilient testing approach for TUI
+  - Description: Replace brittle string-based tests with behavior-focused testing approach
   - Dependencies: None
   - Priority: High
-
-- [x] Create integration test for help flag
-  - Description: Add test in main_test.go to verify help flag exits cleanly with proper output
-  - Dependencies: Help flag implementation in main.go
+- [x] Improve error view with contextual troubleshooting
+  - Description: Parse error messages to provide specific troubleshooting tips
+  - Dependencies: Consistent styles
+  - Priority: High
+- [x] Refine success view
+  - Description: Better layout, clearer output path display, add celebratory elements
+  - Dependencies: Consistent styles
   - Priority: Medium
-
-- [x] Review/update unit tests for flag handling
-  - Description: Ensure input/flags_test.go covers flag.ErrHelp being returned when help is requested
+- [x] Refine source file input view
+  - Description: Improve layout, instructions, and input presentation
+  - Dependencies: Consistent styles
+  - Priority: Medium
+- [x] Refine stdin input view
+  - Description: Improve layout, instructions, tips/examples presentation
+  - Dependencies: Consistent styles
+  - Priority: Medium
+- [x] Apply consistent text wrapping
+  - Description: Ensure wrapText is applied uniformly across all views
   - Dependencies: None
   - Priority: Medium
-
-## Documentation
-- [x] Update documentation if necessary
-  - Description: If any changes were made to flag handling behavior, update relevant documentation
-  - Dependencies: Implementation tasks
-  - Priority: Low
+- [x] Add subtle feedback on input focus
+  - Description: Use lipgloss styles to indicate focused input field
+  - Dependencies: Consistent styles
+  - Priority: Medium

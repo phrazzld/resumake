@@ -4,17 +4,8 @@
 // It takes a stream-of-consciousness text input from the user (optionally combined with
 // an existing resume) and transforms it into a polished, well-structured resume in Markdown format.
 //
-// The main package orchestrates the entire process flow:
-// 1. Parsing command-line flags
-// 2. Retrieving the API key from environment variables
-// 3. Initializing the Gemini API client
-// 4. Reading the source file (if provided)
-// 5. Reading user input from stdin
-// 6. Building a prompt from the inputs
-// 7. Sending the prompt to the Gemini API
-// 8. Processing the response and extracting Markdown content
-// 9. Writing the generated resume to a file
-// 10. Displaying a completion message with next steps
+// The main package orchestrates the entire process flow by initializing and running a
+// Terminal User Interface (TUI) built with the BubbleTea framework.
 package main
 
 import (
@@ -23,12 +14,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/google/generative-ai-go/genai"
-	"github.com/phrazzld/resumake/api"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/phrazzld/resumake/input"
-	"github.com/phrazzld/resumake/output"
-	"github.com/phrazzld/resumake/prompt"
+	"github.com/phrazzld/resumake/tui"
 )
 
 func main() {
@@ -47,106 +38,67 @@ func main() {
 		log.Fatalf("Error parsing flags: %v", err)
 	}
 	
-	// Get API key from environment variables
-	apiKey, err := api.GetAPIKey()
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Create a cancellable context
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // Ensure context is cancelled when main exits
 	
-	// Initialize client and model for future use
-	ctx := context.Background()
-	client, model, err := api.InitializeClient(ctx, apiKey)
-	if err != nil {
-		log.Fatalf("Failed to initialize Gemini client: %v", err)
-	}
-	defer client.Close()
+	// Initialize the Bubble Tea model with flags for pre-filling inputs
+	model := tui.NewModel()
 	
-	// Display initialization success message
-	fmt.Printf("Successfully initialized Gemini client with model: %s\n", api.DefaultModelName)
-	fmt.Println("Model configured with system instructions for resume generation")
+	// Apply the context to the model
+	model = model.WithContext(ctx)
 	
-	// Read source file if provided
-	var sourceContent string
-	var sourceFileRead bool
-	
+	// If a source path was provided via flags, pre-fill it in the model
 	if flags.SourcePath != "" {
-		var err error
-		sourceContent, sourceFileRead, err = input.ReadSourceFileFromFlags(flags)
-		if err != nil {
-			log.Fatalf("Error reading source file: %v", err)
-		}
+		model = model.WithSourcePath(flags.SourcePath)
+	}
+	
+	// If an output path was provided via flags, set it in the model
+	if flags.OutputPath != "" {
+		model = model.WithOutputPath(flags.OutputPath)
+	}
+	
+	// Set up signal handling for graceful shutdown, passing the cancel function
+	p := setupProgramWithSignalHandling(model, cancel)
+	
+	// Run the program
+	if _, err := p.Run(); err != nil {
+		log.Fatalf("Error running TUI: %v", err)
+	}
+	
+	// Program finished successfully
+	fmt.Println("\nResumake finished.")
+}
+
+// setupProgramWithSignalHandling creates a new Bubble Tea program with the given model
+// and sets up signal handling for graceful shutdown.
+// It accepts a context.CancelFunc that will be called when a termination signal is received.
+func setupProgramWithSignalHandling(model tea.Model, cancel context.CancelFunc) *tea.Program {
+	// Create a new Bubble Tea program with our model
+	p := tea.NewProgram(model, tea.WithAltScreen())
+	
+	// Create a channel to listen for signals
+	signalCh := make(chan os.Signal, 1)
+	
+	// Set up signal notification
+	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+	
+	// Start a goroutine to handle signals
+	go func() {
+		sig := <-signalCh
 		
-		if sourceFileRead {
-			fmt.Printf("Successfully read source resume from: %s\n", flags.SourcePath)
-		}
-	}
+		// Log the signal that was received
+		log.Printf("Received signal: %v", sig)
+		
+		// Cancel the context first to stop any ongoing operations
+		// This ensures API calls can be properly cancelled
+		cancel()
+		
+		// Then send a QuitMsg to the program to exit gracefully
+		// This ensures the cleanupAPIClient function is called
+		// before exiting
+		p.Send(tea.QuitMsg{})
+	}()
 	
-	// Read stream-of-consciousness input from stdin
-	stdinContent, err := input.ReadFromStdin()
-	if err != nil {
-		log.Fatalf("Error reading from stdin: %v", err)
-	}
-	
-	if len(stdinContent) > 0 {
-		fmt.Println("Successfully read input from stdin")
-	} else {
-		fmt.Println("Warning: No input received from stdin")
-	}
-	
-	// Build the prompt from source content and stdin input
-	promptContent := prompt.GeneratePromptContent(sourceContent, stdinContent)
-	
-	// Display confirmation that the prompt has been built
-	fmt.Println("Successfully built prompt from inputs")
-	
-	// Execute API request with the prompt content
-	fmt.Println("Executing API request to generate resume...")
-	response, err := api.ExecuteRequest(ctx, model, promptContent)
-	if err != nil {
-		log.Fatalf("Error executing API request: %v", err)
-	}
-	
-	// Process the API response
-	fmt.Println("Processing API response...")
-	markdownContent, err := output.ProcessResponseContent(response)
-	if err != nil {
-		// Check if this is a truncation error and we might be able to recover
-		if response != nil && len(response.Candidates) > 0 && 
-		   response.Candidates[0].FinishReason == genai.FinishReasonMaxTokens {
-			fmt.Println("Warning: Response was truncated due to token limit")
-			fmt.Println("Attempting to recover partial content...")
-			
-			// Try to recover partial content
-			partialContent, recoverErr := api.TryRecoverPartialContent(response)
-			if recoverErr == nil && partialContent != "" {
-				fmt.Println("Successfully recovered partial content with truncation warning")
-				markdownContent = partialContent
-			} else {
-				log.Fatalf("Error processing API response: %v", err)
-			}
-		} else {
-			log.Fatalf("Error processing API response: %v", err)
-		}
-	}
-	
-	// Display API response information
-	fmt.Println("Successfully received and processed API response")
-	fmt.Println("Validated and cleaned Markdown content")
-	
-	// Write the generated markdown to a file
-	fmt.Println("Writing generated resume to file...")
-	outputPath, err := output.WriteOutput(markdownContent, flags.OutputPath)
-	if err != nil {
-		log.Fatalf("Error writing output file: %v", err)
-	}
-	
-	// Display completion message
-	fmt.Println("\n----- RESUME GENERATION COMPLETE -----")
-	fmt.Printf("Output file:      %s\n", outputPath)
-	fmt.Printf("Content length:   %d characters\n", len(markdownContent))
-	fmt.Println("\nNext steps:")
-	fmt.Printf("  * Review your resume at %s\n", outputPath)
-	fmt.Println("  * Make any necessary edits to improve formatting")
-	fmt.Println("  * Convert to other formats as needed (PDF, DOCX)")
-	fmt.Println("---------------------------------------")
+	return p
 }
