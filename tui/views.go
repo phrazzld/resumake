@@ -317,32 +317,119 @@ func renderGeneratingView(m Model) string {
 	)
 }
 
-// renderSuccessView generates the success view
+// renderSuccessView generates the enhanced success view with celebratory elements
 func renderSuccessView(m Model) string {
-	// Calculate display width (unused in this view currently)
-	_ = getConstrainedWidth(m.width)
+	// Calculate display width
+	displayWidth := getConstrainedWidth(m.width)
 	
-	// Create a title with high contrast
+	// Use the shared wrapText utility for consistent text wrapping
+	wrap := func(text string, width int) string {
+		return wrapText(text, width)
+	}
+	
+	// Create a celebratory title with high contrast
 	title := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(highlightColor).
 		Background(successColor).
 		Padding(1).
-		Render(" Success! ")
+		Width(displayWidth - 4).
+		Align(lipgloss.Center).
+		Render("🎉 Success! 🎉")
 	
-	// Show output path
-	outputInfo := fmt.Sprintf("Resume saved to: %s", m.outputPath)
+	// Create a celebratory message
+	celebrationMsg := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(successColor).
+		Align(lipgloss.Center).
+		Width(displayWidth - 4).
+		Render("✅ Your professional resume has been successfully generated!")
 	
-	// Compose the view
+	// Create a stats section
+	// Parse the content length
+	contentLength := "Unknown"
+	if m.resultMessage != "" {
+		contentLength = m.resultMessage + " characters"
+	}
+	
+	// Calculate input stats
+	sourceFileInfo := ""
+	if m.sourceContent != "" {
+		sourceFile := m.sourcePathInput.Value()
+		sourceFileInfo = fmt.Sprintf("📄 Source file: %s\n\n", sourceFile)
+	}
+	
+	// Build statistics section
+	statsTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("📊 Resume Stats")
+	
+	statsContent := fmt.Sprintf("%s📏 Size: %s\n\n⏱️ Generated in seconds", sourceFileInfo, contentLength)
+	
+	statsBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(successColor).
+		Padding(1, 2).
+		Width(displayWidth - 10).
+		Render(statsTitle + "\n\n" + statsContent)
+	
+	// Output path with clear formatting and highlighting
+	outputPathTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("📂 Output Location")
+	
+	pathText := fmt.Sprintf("Your resume is saved at:\n\n%s", 
+		lipgloss.NewStyle().
+			Background(bgAccentColor).
+			Padding(0, 1).
+			Render(m.outputPath))
+	
+	outputPathBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(accentColor).
+		Padding(1, 2).
+		Width(displayWidth - 10).
+		Render(outputPathTitle + "\n\n" + pathText)
+	
+	// Next steps guidance
+	nextStepsTitle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Render("🚀 Next Steps")
+	
+	nextStepsContent := "1. Your resume is in Markdown format (.md)\n\n" +
+		"2. You can convert it to other formats:\n" +
+		"   • PDF: Use a markdown editor or online converter\n" +
+		"   • DOCX: Import to Word or Google Docs\n" +
+		"   • HTML: Use a markdown to HTML converter\n\n" +
+		"3. Review and customize before sending to employers"
+	
+	nextStepsBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(secondaryColor).
+		Padding(1, 2).
+		Width(displayWidth - 10).
+		Render(nextStepsTitle + "\n\n" + wrap(nextStepsContent, displayWidth - 20))
+	
+	// Exit instructions
+	exitInstructions := italicStyle.Render("Press Enter to quit or run again")
+	
+	// Compose the view with all sections
 	return lipgloss.JoinVertical(
-		lipgloss.Left,
+		lipgloss.Center,
 		title,
 		"",
-		successStyle.Render("✓ Resume successfully generated!"),
+		celebrationMsg,
 		"",
-		lipgloss.NewStyle().Bold(true).Render(outputInfo),
+		statsBox,
 		"",
-		italicStyle.Render("Press Enter to quit"),
+		outputPathBox,
+		"",
+		nextStepsBox,
+		"",
+		exitInstructions,
 	)
 }
 
