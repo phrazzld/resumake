@@ -158,11 +158,6 @@ func renderSourceFileInputView(m Model) string {
 	
 	// Apply different styling based on focus state
 	if m.sourcePathInput.Focused() {
-		// Add focus indicator
-		focusLabel := FocusedInputLabel(true)
-		if focusLabel != "" {
-			inputContent = focusLabel + "\n" + inputContent
-		}
 		styledInputView = FocusedStyle(inputContent, displayWidth - 8)
 	} else {
 		styledInputView = UnfocusedStyle(inputContent, displayWidth - 8)
@@ -282,15 +277,7 @@ func renderStdinInputView(m Model) string {
 	
 	// Apply different styling based on focus state
 	if m.stdinInput.Focused() {
-		// Add focus indicator
-		focusLabel := FocusedInputLabel(true)
-		if focusLabel != "" {
-			focusLabelStyle := lipgloss.NewStyle().
-				Padding(1, 0)
-			styledTextareaView = FocusedStyle(focusLabelStyle.Render(focusLabel) + "\n" + textareaContent, displayWidth - 8)
-		} else {
-			styledTextareaView = FocusedStyle(textareaContent, displayWidth - 8)
-		}
+		styledTextareaView = FocusedStyle(textareaContent, displayWidth - 8)
 	} else {
 		styledTextareaView = UnfocusedStyle(textareaContent, displayWidth - 8)
 	}

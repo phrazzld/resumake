@@ -24,8 +24,7 @@ var (
 	highlightColor = lipgloss.AdaptiveColor{Light: "#000000", Dark: "#FFFFFF"} // Maximum contrast
 	
 	// Focus colors
-	focusBgColor   = lipgloss.AdaptiveColor{Light: "#E6F0FF", Dark: "#1A2645"} // Subtle background for focused elements
-	focusBorderColor = lipgloss.AdaptiveColor{Light: "#4C8FFF", Dark: "#7FAAFF"} // Brighter border for focused elements
+	focusBorderColor = lipgloss.AdaptiveColor{Light: "#0550AE", Dark: "#4C8FFF"} // Same as primary for consistent styling
 )
 
 // Base styles to be composed into more complex styles
@@ -130,10 +129,14 @@ func FocusedStyle(content string, width int) string {
 	return lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(focusBorderColor).
-		Background(focusBgColor).
+		BorderLeft(true).
+		BorderRight(true).
+		BorderTop(true).
+		BorderBottom(true).
+		Bold(true).
 		Padding(0, 1).
 		Width(width).
-		Render(content)
+		Render("▍ " + content) // Add a subtle cursor indicator
 }
 
 // UnfocusedStyle applies unfocused styling to the provided content
@@ -149,12 +152,7 @@ func UnfocusedStyle(content string, width int) string {
 
 // FocusedInputLabel creates a label that indicates focus state
 func FocusedInputLabel(focused bool) string {
-	if focused {
-		return lipgloss.NewStyle().
-			Bold(true).
-			Foreground(primaryColor).
-			Render("✓ FOCUSED")
-	}
+	// We're not using a label anymore - focus is indicated by styling only
 	return ""
 }
 

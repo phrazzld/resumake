@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"strings"
 	"testing"
 	
 	"github.com/charmbracelet/bubbles/textinput"
@@ -81,8 +80,8 @@ func TestInputFocusFeedback(t *testing.T) {
 		}
 	})
 	
-	// Test for focus indicator elements
-	t.Run("focus indicator elements", func(t *testing.T) {
+	// Test for distinctive styling difference
+	t.Run("distinctive styling difference", func(t *testing.T) {
 		// Create a focused input
 		focusedInput := textinput.New()
 		focusedInput.Focus()
@@ -96,24 +95,24 @@ func TestInputFocusFeedback(t *testing.T) {
 			height:          24,
 		}
 		
-		// Render the view
-		view := renderSourceFileInputView(model)
+		// Create an unfocused model for comparison
+		unfocusedInput := textinput.New()
+		unfocusedInput.SetValue("Test input")
 		
-		// Check for visual focus indicators
-		// The focused input should have a distinctive styling that includes at least
-		// one of these focus indicator terms
-		focusIndicators := []string{"focused", "active", "selected", "highlight"}
-		
-		foundIndicator := false
-		for _, indicator := range focusIndicators {
-			if strings.Contains(strings.ToLower(view), indicator) {
-				foundIndicator = true
-				break
-			}
+		unfocusedModel := Model{
+			sourcePathInput: unfocusedInput,
+			state:           stateInputSourcePath,
+			width:           80,
+			height:          24,
 		}
 		
-		if !foundIndicator {
-			t.Error("Focused input should have a visual indicator in the view")
+		// Render both views
+		focusedView := renderSourceFileInputView(model)
+		unfocusedView := renderSourceFileInputView(unfocusedModel)
+		
+		// The views should be different to indicate focus state
+		if focusedView == unfocusedView {
+			t.Error("Focused input should have visually different styling than unfocused input")
 		}
 	})
 }
